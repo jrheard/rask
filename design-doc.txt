@@ -1,0 +1,57 @@
+Overall Goal
+============
+My Taskwarrior RPi setup, with more bells and whistles and less pain (for the user, anyway).
+Written in Rust for learning, likely very overengineered also for learning.
+
+Use Cases
+=========
+- [ ] Enter a task
+- [ ] Show list of active tasks
+- [ ] Tasks have short numeric IDs (also uuids under the hood)
+- [ ] Mark a task completed
+- [ ] Tasks have attributes like project, priority
+- [ ] Tasks have due dates
+- [ ] Listing tasks shows task due date, attributes; doesn't show completed tasks
+- [ ] Tasks can be edited a la `task edit`
+- [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
+- [ ] Multiple machines can view the same task list
+- [ ] Multiple machines can edit the same task list without needing to carefully merge/sync their resulting state
+- [ ] Nobody but me can edit/view my tasks
+- [ ] Tasks can be marked as "recurring", eg every two days, two weeks, two months; these tasks recur at midnight on the morning of a particular day, regardless of the time of day when they were created
+- [ ] "Waiting" a recurring task is easy/natural (the task is hidden for eg 6 months, and then the recurrence starts as normal afterward)
+- [ ] Different machines can specify different display-time profiles with a .raskrc file (primarily affects which columns are shown - what else?)
+- [ ] Some sort of `task gc` system automatically "compresses" tasks' numeric IDs
+- [ ] Some way to view tasks from my phone
+
+Stretch Use Cases
+=================
+- [ ] Some way to enter a task from my phone
+- [ ] Some way to mark a task deleted from my phone
+- [ ] Stats / burndown charts
+
+High-Level Design
+=================
+* Users primarily interact with the system via a CLI similar to `task`
+* The CLI makes HTTP requests to a web API
+* The system's data is stored in a centralized postgres db
+* Recurring tasks are created by a simple daemon process
+
+-------
+
+Slightly-more-zoomed-in design scratchpad
+=========================================
+
+Cargo workspace
+* 1 lib crate with shared business logic
+    TODO: does this business logic know how to interact with the DB? 80% leaning toward yes
+* 1 bin crate for web api
+* 1 bin crate for recurrence daemon
+
+docker-compose setup
+    * 1 docker image for http api crate
+    * 1 docker image for recurrence daemon crate
+    * 1 docker image for db
+        * 1 volume for persistence 1 bin crate for CLI
+
+authentication done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
+    no clue how i'll do authentication if i allow mobile devices to access the system via an html webapp. oauth with a single allowed user?
