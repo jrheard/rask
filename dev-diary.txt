@@ -17,8 +17,23 @@ TODO pick a web framework
 TODO hello world json endpoint
 TODO pick a sql library
 TODO set up postgres in a docker container, publish the port to my local machine
+    TODO set up a docker-compose.yaml
     TODO figure out persistent storage via a volume??
 
 i can save dockerizing the webapp for later i think!
 
 looks like you can have multiple binaries in the same workspace, https://stackoverflow.com/questions/36604010/how-can-i-build-multiple-binaries-with-cargo, cool
+hm or maybe i would just use `cargo build --bin foo`
+anyway neat
+
+tbh i don't fully understand the utility of cargo workspaces
+but i'll figure it out
+and if i decide i don't actually want that here, i can always split em up
+i think that having all my bins have access to the same lib will be useful though
+and it'll be nice to not have to publish the lib via crates.io or similar each time it gets new code
+
+ok, let's pick a web framework
+https://www.lpalmieri.com/posts/2020-07-04-choosing-a-rust-web-framework-2020-edition/
+actix-web is like flask, rocket is like django
+
+i think i will go with rocket

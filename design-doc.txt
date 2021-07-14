@@ -21,10 +21,10 @@ Use Cases
 - [ ] "Waiting" a recurring task is easy/natural (the task is hidden for eg 6 months, and then the recurrence starts as normal afterward)
 - [ ] Different machines can specify different display-time profiles with a .raskrc file (primarily affects which columns are shown - what else?)
 - [ ] Some sort of `task gc` system automatically "compresses" tasks' numeric IDs
-- [ ] Some way to view tasks from my phone
 
 Stretch Use Cases
 =================
+- [ ] Some way to view tasks from my phone
 - [ ] Some way to enter a task from my phone
 - [ ] Some way to mark a task deleted from my phone
 - [ ] Stats / burndown charts
@@ -43,9 +43,11 @@ Slightly-more-zoomed-in design scratchpad
 
 Cargo workspace
 * 1 lib crate with shared business logic
-    TODO: does this business logic know how to interact with the DB? 80% leaning toward yes
+    TODO: does this business logic lib crate know how to interact with the DB?
 * 1 bin crate for web api
+    TODO: is the web api the only part of the system that talks directly to the db?
 * 1 bin crate for recurrence daemon
+    TODO how does the daemon talk to the db? through the api or directly?
 
 docker-compose setup
     * 1 docker image for http api crate
@@ -54,4 +56,8 @@ docker-compose setup
         * 1 volume for persistence 1 bin crate for CLI
 
 authentication done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
-    no clue how i'll do authentication if i allow mobile devices to access the system via an html webapp. oauth with a single allowed user?
+
+no clue how i'll do authentication for phone.
+    if i allow mobile devices to access the system via an html webapp, i could do oauth with a single allowed user?
+    if i only allow tasks to be entered via phone, i could just use email and have only my own email addresses whitelisted
+        wouldn't be able to view / complete tasks via phone, but that'd be totally fine imo
