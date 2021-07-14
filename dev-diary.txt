@@ -1,0 +1,24 @@
+7/13/21
+
+ok!!!
+
+TODO how do cargo workspaces work?
+
+TODO where should i start?
+    i'm thinking web api and postgres setup, i can test it manually w that http query vscode extension i saw in that one talk
+        but i think i want to set up docker as part of that!!
+        so i'll need to set up, like, images??
+        augh i wish i still had that diamol book but it's downstairs
+
+well, let's start with the web api bin crate
+i can split out shared logic into a lib crate later
+
+TODO pick a web framework
+TODO hello world json endpoint
+TODO pick a sql library
+TODO set up postgres in a docker container, publish the port to my local machine
+    TODO figure out persistent storage via a volume??
+
+i can save dockerizing the webapp for later i think!
+
+looks like you can have multiple binaries in the same workspace, https://stackoverflow.com/questions/36604010/how-can-i-build-multiple-binaries-with-cargo, cool
