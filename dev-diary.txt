@@ -13,8 +13,8 @@ TODO where should i start?
 well, let's start with the web api bin crate
 i can split out shared logic into a lib crate later
 
-TODO pick a web framework
-TODO hello world json endpoint
+DONE pick a web framework
+DONE hello world endpoint
 TODO pick a sql library
 TODO set up postgres in a docker container, publish the port to my local machine
     TODO set up a docker-compose.yaml
@@ -37,3 +37,9 @@ https://www.lpalmieri.com/posts/2020-07-04-choosing-a-rust-web-framework-2020-ed
 actix-web is like flask, rocket is like django
 
 i think i will go with rocket
+
+coolcool, rocket is set up
+
+i'm reading the docs now, https://rocket.rs/v0.5-rc/guide/introduction/
+
+i'll look into sql libraries and postgres docker stuff next
