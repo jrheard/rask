@@ -81,3 +81,18 @@ DONE how do i publish the port to my host machine?
 
 holy cow this works
 🚂  psql -h localhost -p 5000 --db=rask --user=postgres
+
+sickkk
+
+TODO set up rocket connection pooling
+
+oh nice, the diesel docs have you use a lib called dotenv, seems like a great idea
+
+installing the diesel cli
+looks like i gotta write my first migration!!! aaa
+i guess i could just read the docs first :p
+
+TODO investigate diesel_migrations crate embed_migrations feature
+
+whatever i'll just use int ids for now
+i can play around w uuids later
