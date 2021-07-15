@@ -43,3 +43,36 @@ coolcool, rocket is set up
 i'm reading the docs now, https://rocket.rs/v0.5-rc/guide/introduction/
 
 i'll look into sql libraries and postgres docker stuff next
+
+i don't think i really need to read all this rocket stuff but i'm doing it anyway so far
+might put it down partway through
+
+request guards are interesting, i'll prob end up using that system for auth
+
+i don't love how they use cutesy names for everything
+rocket, launch, cookiejar, crumb
+ick.
+
+===
+
+7/14/21
+
+reading more docs
+
+i dunno man, rocket seems pretty magical
+in, like, the ruby sense
+
+oh right, i've heard of diesel
+it's an orm i can use w postgres?
+
+https://rocket.rs/v0.5-rc/guide/pastebin/
+this sounds interesting!
+
+i think i'm going to need to get a local postgres set up before i can continue much farther
+
+https://hub.docker.com/_/postgres
+
+https://medium.com/analytics-vidhya/getting-started-with-postgresql-using-docker-compose-34d6b808c47c
+
+ok i have a postgres docker image running locally
+neat!
