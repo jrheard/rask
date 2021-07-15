@@ -76,3 +76,8 @@ https://medium.com/analytics-vidhya/getting-started-with-postgresql-using-docker
 
 ok i have a postgres docker image running locally
 neat!
+
+DONE how do i publish the port to my host machine?
+
+holy cow this works
+🚂  psql -h localhost -p 5000 --db=rask --user=postgres
