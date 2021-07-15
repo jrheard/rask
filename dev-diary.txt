@@ -96,3 +96,30 @@ TODO investigate diesel_migrations crate embed_migrations feature
 
 whatever i'll just use int ids for now
 i can play around w uuids later
+
+TODO play around with uuids
+
+ok cool so we're making progress
+i'll keep reading the diesel docs
+
+but then what next?
+what's hello world?
+
+TODO add a rocket POST endpoint that takes a body with name: String, saves it to the db, and returns a 200 w the id of the task
+
+TODO use .env config instead of Rocket.toml
+
+hm actually i think that echoing the name of a task by an id would be more of a hello world
+i could just enter the task via psql
+
+holy shit setting up rocket and diesel together is a total nightmare
+
+i'm going to end up going to bed with this half-done
+argh
+
+ok i see
+i was using u32s but i needed to use i32s
+but the error messages were not helpful
+oh well!
+
+one error left: Responder trait not implemented for Task
