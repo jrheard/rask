@@ -1,17 +1,17 @@
 [package]
+edition = "2018"
 name = "rask_api"
 version = "0.1.0"
-edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.5.0-rc.1"
-diesel = { version = "1.4.4", features = ["postgres"] }
+diesel = {version = "1.4.4", features = ["postgres"]}
 dotenv = "0.15.0"
-serde = { version = "1.0.126", features = ["derive"] }
+rocket = {version = "0.5.0-rc.1", features = ["json"]}
+serde = {version = "1.0.126", features = ["derive"]}
 
 [dependencies.rocket_sync_db_pools]
-version = "0.1.0-rc.1"
 default-features = false
 features = ["diesel_postgres_pool"]
+version = "0.1.0-rc.1"

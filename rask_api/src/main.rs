@@ -5,7 +5,8 @@ extern crate diesel;
 use crate::schema::task;
 use diesel::prelude::*;
 use diesel::PgConnection;
-use rocket::{get, launch, response::content::Json, routes};
+use rocket::serde::json::Json;
+use rocket::{get, launch, routes};
 use rocket_sync_db_pools::database;
 
 pub mod models;

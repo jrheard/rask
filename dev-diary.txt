@@ -84,7 +84,7 @@ holy cow this works
 
 sickkk
 
-TODO set up rocket connection pooling
+DONE set up rocket connection pooling
 
 oh nice, the diesel docs have you use a lib called dotenv, seems like a great idea
 
@@ -123,3 +123,13 @@ but the error messages were not helpful
 oh well!
 
 one error left: Responder trait not implemented for Task
+
+aha! i think i need to use rocket_contrib
+whatever that is
+
+or not??? https://github.com/SergioBenitez/Rocket/issues/1107
+
+ok, i think i need to specify the json feature of rocket
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
+
+omg it workssssss
