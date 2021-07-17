@@ -1,12 +1,12 @@
-GET http://127.0.0.1:8000/1
+GET http://127.0.0.1:8000/task/1
 
 ###
 
-GET http://127.0.0.1:8000/2
+GET http://127.0.0.1:8000/task/2
 
 ###
 
-POST http://127.0.0.1:8000/create HTTP/1.1
+POST http://127.0.0.1:8000/task HTTP/1.1
 content-type: application/json
 
 {

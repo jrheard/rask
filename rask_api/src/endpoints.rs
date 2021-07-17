@@ -17,7 +17,7 @@ pub struct NewTaskResponse {
     task: Task,
 }
 
-#[get("/<task_id>")]
+#[get("/task/<task_id>")]
 pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Option<Json<Task>> {
     db.run(move |conn| task::table.filter(task::id.eq(task_id)).first(conn))
         .await
@@ -25,7 +25,7 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Option<Json<Task>> {
         .ok()
 }
 
-#[post("/create", format = "json", data = "<task_json>")]
+#[post("/task", format = "json", data = "<task_json>")]
 // TODO return result
 pub async fn create_task(db: DBConn, task_json: Json<TaskJSON>) -> Created<Json<NewTaskResponse>> {
     let new_task = db
