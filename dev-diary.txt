@@ -185,3 +185,8 @@ at this point i think i get the whole dotenv, figment, rocket, db pooling stuff
 the .into()s are necessary because they convert eg `10` into a figment Value, gotcha
 https://docs.rs/figment/0.10.5/src/figment/value/value.rs.html shows the implementation of that
 neat macro!
+
+ok, let's try making a post endpoint
+
+it works!!!
+gotta make it return a result
