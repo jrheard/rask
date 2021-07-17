@@ -49,19 +49,24 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>, Rask
     db.run(move |conn| task::table.filter(task::id.eq(task_id)).first(conn))
         .await
         .map(Json)
-        .map_err(|source| RaskApiError::DatabaseError(source))
+        .map_err(|e| RaskApiError::DatabaseError(e))
 }
 
 #[get("/tasks")]
-pub async fn get_tasks(db: DBConn) -> Json<TaskListResponse> {
-    let tasks = db.run(move |conn| task::table.load(conn)).await.unwrap();
+pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>, RaskApiError> {
+    let tasks = db
+        .run(move |conn| task::table.load(conn))
+        .await
+        .map_err(|e| RaskApiError::DatabaseError(e))?;
 
-    Json(TaskListResponse { tasks })
+    Ok(Json(TaskListResponse { tasks }))
 }
 
 #[post("/task", format = "json", data = "<task_json>")]
-// TODO return result
-pub async fn create_task(db: DBConn, task_json: Json<TaskJSON>) -> Created<Json<NewTaskResponse>> {
+pub async fn create_task(
+    db: DBConn,
+    task_json: Json<TaskJSON>,
+) -> Result<Created<Json<NewTaskResponse>>, RaskApiError> {
     let new_task = db
         .run(move |c| {
             diesel::insert_into(task::table)
@@ -71,9 +76,9 @@ pub async fn create_task(db: DBConn, task_json: Json<TaskJSON>) -> Created<Json<
                 .get_result(c)
         })
         .await
-        .unwrap();
+        .map_err(|e| RaskApiError::DatabaseError(e))?;
 
     let response = NewTaskResponse { task: new_task };
 
-    Created::new("/create").body(Json(response))
+    Ok(Created::new("/create").body(Json(response)))
 }
