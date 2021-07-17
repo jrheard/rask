@@ -22,7 +22,7 @@ fn rocket() -> _ {
         "pool_size" => 10.into()
     };
 
-    rocket::custom(rocket::Config::figment().merge(("databases", map!["rask_db" => db])))
+    rocket::custom(rocket::Config::figment().merge(("databases", map! {"rask_db" => db})))
         .mount("/", routes![endpoints::hello])
         .attach(db::DBConn::fairing())
 }

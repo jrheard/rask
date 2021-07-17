@@ -148,3 +148,40 @@ let's figure out how to get rid of this rocket.toml and use .env
 
 ok, i used dotenv and figment, and it was really confusing
 time to read their docs!!!
+
+so many typesss
+
+ok, dotenv is straightforward
+dotenv() returns a Result that must be used, so you call .ok() to turn it into an Option and discard the error, if any
+basically silencing an error if any exists, because apparently you don't usually use a .env file in prod
+cool cool
+
+so what in the HECK is up with figment? it seems totally nuts
+
+oh wow, it's really recent - first commit nine months ago
+like zero blog posts about it :/
+
+my god there are so many domain specific terms in this lib
+
+    Providers always produce Dicts nested in Profiles. A profile is selected
+    when extracting, and the dictionary corresponding to that profile is
+    deserialized into the requested type. If no profile is selected, the Default
+    profile is used.
+
+    ??????????
+
+ok i think i can ignore profiles
+
+in the future i'd be interested in reimplementing rask-api with actix-web
+
+gosh
+i've been working through https://www.perimeterx.com/tech-blog/2021/building-a-website-using-rust-rocket-diesel-and-askama-part-2/ this whole time
+i wonder how he figured this all out!!
+
+lucky thing for me that this blog post is so recent (april 2021)
+
+ok cool cool cool
+at this point i think i get the whole dotenv, figment, rocket, db pooling stuff
+the .into()s are necessary because they convert eg `10` into a figment Value, gotcha
+https://docs.rs/figment/0.10.5/src/figment/value/value.rs.html shows the implementation of that
+neat macro!
