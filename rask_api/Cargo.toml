@@ -10,6 +10,7 @@ diesel = {version = "1.4.4", features = ["postgres"]}
 dotenv = "0.15.0"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
 serde = {version = "1.0.126", features = ["derive"]}
+thiserror = "1.0"
 
 [dependencies.rocket_sync_db_pools]
 default-features = false
