@@ -133,3 +133,18 @@ ok, i think i need to specify the json feature of rocket
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
 
 omg it workssssss
+
+cool!
+
+next up: go back and clean up the code + clean up whatever todos seem reasonable to clean up
+
+===
+
+7/16/21
+
+ok! getting back to it
+
+let's figure out how to get rid of this rocket.toml and use .env
+
+ok, i used dotenv and figment, and it was really confusing
+time to read their docs!!!

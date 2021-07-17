@@ -1,2 +1,0 @@
-[global.databases]
-rask_db = {url = "postgres://postgres:password@localhost:5000/rask"}
