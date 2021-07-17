@@ -25,7 +25,11 @@ fn rocket() -> _ {
     rocket::custom(rocket::Config::figment().merge(("databases", map! {"rask_db" => db})))
         .mount(
             "/",
-            routes![endpoints::get_task_by_id, endpoints::create_task],
+            routes![
+                endpoints::get_tasks,
+                endpoints::get_task_by_id,
+                endpoints::create_task
+            ],
         )
         .attach(db::DBConn::fairing())
 }

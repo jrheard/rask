@@ -13,6 +13,11 @@ pub struct TaskJSON {
 }
 
 #[derive(Serialize)]
+pub struct TaskListResponse {
+    tasks: Vec<Task>,
+}
+
+#[derive(Serialize)]
 pub struct NewTaskResponse {
     task: Task,
 }
@@ -23,6 +28,13 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Option<Json<Task>> {
         .await
         .map(Json)
         .ok()
+}
+
+#[get("/tasks")]
+pub async fn get_tasks(db: DBConn) -> Json<TaskListResponse> {
+    let tasks = db.run(move |conn| task::table.load(conn)).await.unwrap();
+
+    Json(TaskListResponse { tasks })
 }
 
 #[post("/task", format = "json", data = "<task_json>")]
