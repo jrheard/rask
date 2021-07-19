@@ -1,7 +1,6 @@
 use crate::db::DBConn;
-use crate::models::{NewTask, Task};
-use crate::schema::task;
-use diesel::prelude::*;
+use crate::db_queries;
+use crate::models::Task;
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -35,7 +34,7 @@ type Result<T, E = RaskApiError> = std::result::Result<T, E>;
 
 #[get("/task/<task_id>")]
 pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>> {
-    db.run(move |conn| task::table.filter(task::id.eq(task_id)).first(conn))
+    db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
         .await
         .map(Json)
         .map_err(|e| RaskApiError::DatabaseError(e))
@@ -48,7 +47,7 @@ pub struct TaskListResponse {
 
 #[get("/tasks")]
 pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
-    let tasks = db.run(move |conn| task::table.load(conn)).await?;
+    let tasks = db.run(move |conn| db_queries::get_tasks(conn)).await?;
 
     Ok(Json(TaskListResponse { tasks }))
 }
@@ -69,13 +68,7 @@ pub async fn create_task(
     task_json: Json<TaskJSON>,
 ) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
-        .run(move |c| {
-            diesel::insert_into(task::table)
-                .values(NewTask {
-                    name: &task_json.name,
-                })
-                .get_result(c)
-        })
+        .run(move |conn| db_queries::create_task(conn, &task_json.name))
         .await?;
 
     let response = NewTaskResponse { task: new_task };

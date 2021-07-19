@@ -8,6 +8,7 @@ use rocket::{launch, routes};
 use std::env;
 
 mod db;
+mod db_queries;
 mod endpoints;
 mod models;
 mod schema;
