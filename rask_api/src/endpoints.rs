@@ -31,8 +31,10 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
     }
 }
 
+type Result<T, E = RaskApiError> = std::result::Result<T, E>;
+
 #[get("/task/<task_id>")]
-pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>, RaskApiError> {
+pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>> {
     db.run(move |conn| task::table.filter(task::id.eq(task_id)).first(conn))
         .await
         .map(Json)
@@ -45,7 +47,7 @@ pub struct TaskListResponse {
 }
 
 #[get("/tasks")]
-pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>, RaskApiError> {
+pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
     let tasks = db.run(move |conn| task::table.load(conn)).await?;
 
     Ok(Json(TaskListResponse { tasks }))
@@ -65,7 +67,7 @@ pub struct NewTaskResponse {
 pub async fn create_task(
     db: DBConn,
     task_json: Json<TaskJSON>,
-) -> Result<Created<Json<NewTaskResponse>>, RaskApiError> {
+) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
         .run(move |c| {
             diesel::insert_into(task::table)
