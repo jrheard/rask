@@ -16,7 +16,7 @@ mod schema;
 fn rocket() -> _ {
     dotenv().ok();
 
-    let db_url = env::var("DATABASE_URL").unwrap();
+    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be defined");
     let db: Map<_, Value> = map! {
         "url" => db_url.into(),
         "pool_size" => 10.into()
