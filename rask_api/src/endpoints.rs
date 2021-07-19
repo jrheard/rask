@@ -80,5 +80,5 @@ pub async fn create_task(
 
     let response = NewTaskResponse { task: new_task };
 
-    Ok(Created::new("/create").body(Json(response)))
+    Ok(Created::new("/task").body(Json(response)))
 }
