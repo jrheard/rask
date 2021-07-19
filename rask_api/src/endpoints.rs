@@ -37,7 +37,7 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>> {
     db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
         .await
         .map(Json)
-        .map_err(|e| RaskApiError::DatabaseError(e))
+        .map_err(RaskApiError::DatabaseError)
 }
 
 #[derive(Serialize)]
