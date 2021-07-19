@@ -13,11 +13,12 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum RaskApiError {
-    #[error("Database error")]
+    #[error(transparent)]
     DatabaseError(#[from] diesel::result::Error),
 }
 
 impl<'r> Responder<'r, 'static> for RaskApiError {
+    /// Returns a 500 "internal server error" response.
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
         let body = format!("Error: {}", self);
         let response = Response::build()
@@ -25,23 +26,9 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
             .header(ContentType::Plain)
             .sized_body(body.len(), Cursor::new(body))
             .finalize();
+
         Ok(response)
     }
-}
-
-#[derive(Deserialize)]
-pub struct TaskJSON {
-    name: String,
-}
-
-#[derive(Serialize)]
-pub struct TaskListResponse {
-    tasks: Vec<Task>,
-}
-
-#[derive(Serialize)]
-pub struct NewTaskResponse {
-    task: Task,
 }
 
 #[get("/task/<task_id>")]
@@ -52,14 +39,26 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>, Rask
         .map_err(|e| RaskApiError::DatabaseError(e))
 }
 
+#[derive(Serialize)]
+pub struct TaskListResponse {
+    tasks: Vec<Task>,
+}
+
 #[get("/tasks")]
 pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>, RaskApiError> {
-    let tasks = db
-        .run(move |conn| task::table.load(conn))
-        .await
-        .map_err(|e| RaskApiError::DatabaseError(e))?;
+    let tasks = db.run(move |conn| task::table.load(conn)).await?;
 
     Ok(Json(TaskListResponse { tasks }))
+}
+
+#[derive(Deserialize)]
+pub struct TaskJSON {
+    name: String,
+}
+
+#[derive(Serialize)]
+pub struct NewTaskResponse {
+    task: Task,
 }
 
 #[post("/task", format = "json", data = "<task_json>")]
@@ -75,8 +74,7 @@ pub async fn create_task(
                 })
                 .get_result(c)
         })
-        .await
-        .map_err(|e| RaskApiError::DatabaseError(e))?;
+        .await?;
 
     let response = NewTaskResponse { task: new_task };
 
