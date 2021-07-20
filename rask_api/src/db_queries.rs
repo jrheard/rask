@@ -8,10 +8,7 @@ pub fn get_tasks(conn: &PgConnection) -> QueryResult<Vec<Task>> {
 }
 
 pub fn get_task_by_id(conn: &PgConnection, task_id: i32) -> QueryResult<Option<Task>> {
-    task::table
-        .filter(task::id.eq(task_id))
-        .first(conn)
-        .optional()
+    task::table.find(task_id).first(conn).optional()
 }
 
 pub fn create_task(conn: &PgConnection, name: &str) -> QueryResult<Task> {

@@ -2,7 +2,8 @@ use super::schema::task;
 use diesel::Queryable;
 use serde::Serialize;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Serialize, Identifiable)]
+#[table_name = "task"]
 pub struct Task {
     pub id: i32,
     pub name: String,
