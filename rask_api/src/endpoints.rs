@@ -17,11 +17,17 @@ pub enum RaskApiError {
 }
 
 impl<'r> Responder<'r, 'static> for RaskApiError {
-    /// Returns a 500 "internal server error" response.
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        let status = match &self {
+            Self::DatabaseError(err) => match err {
+                diesel::result::Error::NotFound => Status::NotFound,
+                _ => Status::InternalServerError,
+            },
+        };
+
         let body = format!("Error: {}", self);
         let response = Response::build()
-            .status(Status::InternalServerError)
+            .status(status)
             .header(ContentType::Plain)
             .sized_body(body.len(), Cursor::new(body))
             .finalize();
