@@ -1,10 +1,13 @@
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
 use dotenv::dotenv;
+use rocket::fairing::AdHoc;
 use rocket::figment::util::map;
 use rocket::figment::value::{Map, Value};
-use rocket::{launch, routes};
+use rocket::{launch, routes, Build, Rocket};
 use std::env;
 
 mod db;
@@ -12,6 +15,19 @@ mod db_queries;
 mod endpoints;
 mod models;
 mod schema;
+
+async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
+    embed_migrations!();
+
+    let conn = db::DBConn::get_one(&rocket)
+        .await
+        .expect("database connection");
+    conn.run(|c| embedded_migrations::run(c))
+        .await
+        .expect("diesel migrations");
+
+    rocket
+}
 
 #[launch]
 fn rocket() -> _ {
@@ -33,4 +49,5 @@ fn rocket() -> _ {
             ],
         )
         .attach(db::DBConn::fairing())
+        .attach(AdHoc::on_ignite("Diesel Migrations", run_migrations))
 }
