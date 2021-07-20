@@ -29,6 +29,10 @@ Stretch Use Cases
 - [ ] Some way to mark a task deleted from my phone
 - [ ] Stats / burndown charts
 
+Stretch Overengineering Exercises
+=================================
+- [ ] Kubernetes (maybe with Azure; google/aws cost $73/month for a k8s cluster)
+
 High-Level Design
 =================
 * Users primarily interact with the system via a CLI similar to `task`
@@ -48,16 +52,20 @@ Cargo workspace
     TODO: is the web api the only part of the system that talks directly to the db?
 * 1 bin crate for recurrence daemon
     TODO how does the daemon talk to the db? through the api or directly?
+        through the api imo
     TODO read https://www.badykov.com/rust/2020/06/28/you-dont-need-background-job-library/
         waitaminute, why does he even use tokio here? what's the point of bringing async/await into the mix in this situation? no reason imo!
+* 1 bin crate for CLI
+    talks to the web api for reads/writes
 
 docker-compose setup
     * 1 docker image for http api crate
     * 1 docker image for recurrence daemon crate
     * 1 docker image for db
-        * 1 volume for persistence 1 bin crate for CLI
+        * 1 volume for persistence
 
-authentication done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
+authentication for CLI done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
+requests to API need to be signed by private SSH key
 
 no clue how i'll do authentication for phone.
     if i allow mobile devices to access the system via an html webapp, i could do oauth with a single allowed user?
