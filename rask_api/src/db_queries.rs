@@ -1,18 +1,18 @@
 use crate::models::{NewTask, Task};
-use crate::schema::task;
+use crate::schema::task::dsl::task;
 use diesel::prelude::*;
 use diesel::PgConnection;
 
 pub fn get_tasks(conn: &PgConnection) -> QueryResult<Vec<Task>> {
-    task::table.load(conn)
+    task.load(conn)
 }
 
 pub fn get_task_by_id(conn: &PgConnection, task_id: i32) -> QueryResult<Option<Task>> {
-    task::table.find(task_id).first(conn).optional()
+    task.find(task_id).first(conn).optional()
 }
 
 pub fn create_task(conn: &PgConnection, name: &str) -> QueryResult<Task> {
-    diesel::insert_into(task::table)
+    diesel::insert_into(task)
         .values(NewTask { name })
         .get_result(conn)
 }
