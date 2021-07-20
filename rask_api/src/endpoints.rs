@@ -17,17 +17,11 @@ pub enum RaskApiError {
 }
 
 impl<'r> Responder<'r, 'static> for RaskApiError {
+    /// Respond with a 500 status code.
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        let status = match &self {
-            Self::DatabaseError(err) => match err {
-                diesel::result::Error::NotFound => Status::NotFound,
-                _ => Status::InternalServerError,
-            },
-        };
-
         let body = format!("Error: {}", self);
         let response = Response::build()
-            .status(status)
+            .status(Status::InternalServerError)
             .header(ContentType::Plain)
             .sized_body(body.len(), Cursor::new(body))
             .finalize();
@@ -39,10 +33,10 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
 type Result<T, E = RaskApiError> = std::result::Result<T, E>;
 
 #[get("/task/<task_id>")]
-pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Json<Task>> {
+pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
         .await
-        .map(Json)
+        .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
 }
 
