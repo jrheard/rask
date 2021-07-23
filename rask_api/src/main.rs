@@ -43,6 +43,7 @@ fn rocket() -> _ {
             "/",
             routes![
                 endpoints::get_tasks,
+                endpoints::get_alive_tasks,
                 endpoints::get_task_by_id,
                 endpoints::create_task,
                 endpoints::complete_task
