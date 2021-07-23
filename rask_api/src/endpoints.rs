@@ -1,6 +1,6 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::models::Task;
+use crate::models::{Task, MODE_COMPLETED};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -74,4 +74,12 @@ pub async fn create_task(
     let response = NewTaskResponse { task: new_task };
 
     Ok(Created::new("/task").body(Json(response)))
+}
+
+#[post("/task/<task_id>/complete")]
+pub async fn complete_task(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
+    db.run(move |conn| db_queries::update_mode(conn, task_id, MODE_COMPLETED))
+        .await
+        .map(|row| row.map(Json))
+        .map_err(RaskApiError::DatabaseError)
 }
