@@ -1,0 +1,1 @@
+ALTER TABLE task ADD COLUMN mode text NOT NULL DEFAULT 'pending';
