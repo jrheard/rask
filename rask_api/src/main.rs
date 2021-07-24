@@ -17,6 +17,7 @@ mod endpoints;
 mod models;
 mod schema;
 
+/// Runs Diesel migrations as part of `rocket`'s initialization.
 async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
     embed_migrations!();
 
@@ -28,6 +29,7 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
     rocket
 }
 
+/// Loads environment variables from .env files.
 fn load_environment_variables() {
     if env::var("RUST_TESTING").is_ok() {
         dotenv::from_filename(".env.test").ok();
@@ -100,20 +102,12 @@ mod test {
         assert!(result.is_ok());
     }
 
-    fn assert_all_tasks_endpoint_contains(client: &Client, task_list_response: &TaskListResponse) {
-        let response = client.get("/tasks/all").dispatch();
-        assert_eq!(response.status(), Status::Ok);
-        assert_eq!(
-            response.into_json::<TaskListResponse>().as_ref(),
-            Some(task_list_response)
-        );
-    }
-
-    fn assert_alive_tasks_endpoint_contains(
+    fn assert_tasks_endpoint_contains(
         client: &Client,
+        uri: &str,
         task_list_response: &TaskListResponse,
     ) {
-        let response = client.get("/tasks/alive").dispatch();
+        let response = client.get(uri).dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.into_json::<TaskListResponse>().as_ref(),
@@ -126,8 +120,8 @@ mod test {
     fn test_get_tasks_when_no_tasks() {
         let client = Client::tracked(rocket()).unwrap();
         let expected_response = TaskListResponse { tasks: vec![] };
-        assert_all_tasks_endpoint_contains(&client, &expected_response);
-        assert_alive_tasks_endpoint_contains(&client, &expected_response);
+        assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
+        assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
     }
 
     #[test]
@@ -160,8 +154,8 @@ mod test {
             let expected_response = TaskListResponse {
                 tasks: vec![new_task.clone()],
             };
-            assert_all_tasks_endpoint_contains(&client, &expected_response);
-            assert_alive_tasks_endpoint_contains(&client, &expected_response);
+            assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
+            assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
 
             // The new task should appear in the get-task-by-id endpoint.
             let response = client.get(format!("/task/{}", new_task.id)).dispatch();
