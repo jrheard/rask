@@ -78,4 +78,11 @@ mod test {
             assert_eq!(response.into_string(), Some("{\"tasks\":[]}".to_string()));
         }
     }
+
+    #[test]
+    fn test_get_task_by_id_404s_on_unknown_task() {
+        let client = Client::tracked(rocket()).unwrap();
+        let response = client.get("/task/12345").dispatch();
+        assert_eq!(response.status(), Status::NotFound);
+    }
 }
