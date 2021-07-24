@@ -5,9 +5,7 @@ use serde::Serialize;
 #[derive(Clone, Copy, Debug)]
 pub struct Mode(pub &'static str);
 
-#[allow(dead_code)]
 pub const MODE_PENDING: Mode = Mode("pending");
-#[allow(dead_code)]
 pub const MODE_ACTIVE: Mode = Mode("active");
 pub const MODE_COMPLETED: Mode = Mode("completed");
 #[allow(dead_code)]

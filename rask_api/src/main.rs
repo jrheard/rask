@@ -68,6 +68,7 @@ mod test {
     use rocket::local::blocking::Client;
 
     #[test]
+    /// If we haven't created any tasks, then our tasks-getting endpoints should return an empty list.
     fn test_get_tasks_when_no_tasks() {
         let client = Client::tracked(rocket()).unwrap();
 
