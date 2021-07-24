@@ -1,0 +1,8 @@
+services:
+    db_test:
+        image: "postgres:13"
+        environment:
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: rask
+        ports:
+            - "5001:5432"
