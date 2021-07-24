@@ -5,16 +5,14 @@ Written in Rust for learning, likely very overengineered also for learning.
 
 Use Cases
 =========
-- [ ] Enter a task
-- [ ] Show list of active tasks
-- [ ] Tasks have numeric IDs
-- [ ] Mark a task completed
+- [ ] Enter a task (done in api)
+- [ ] Show list of active tasks (done in api)
+- [ ] Tasks have numeric IDs (done in api)
+- [ ] Mark a task completed (done in api)
 - [ ] Tasks have attributes like project, priority
 - [ ] Tasks have due dates
-- [ ] Listing tasks shows task due date, attributes; doesn't show completed tasks
 - [ ] Tasks can be edited a la `task edit`
 - [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
-- [ ] Multiple machines can view the same task list
 - [ ] Multiple machines can edit the same task list without needing to carefully merge/sync their resulting state
 - [ ] Nobody but me can edit/view my tasks
 - [ ] Tasks can be marked as "recurring", eg every two days, two weeks, two months; these tasks recur at midnight on the morning of a particular day, regardless of the time of day when they were created
@@ -29,9 +27,20 @@ Stretch Use Cases
 - [ ] Some way to mark a task deleted from my phone
 - [ ] Stats / burndown charts
 
+Development Setup
+=================
+- [X] Tests run in CI
+- [X] Test coverage is generated in CI
+- [ ] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
+- [ ] Manual deploy to production on my linode (blocked on setting up auth first)
+- [ ] CD to production
+
 Stretch Overengineering Exercises
 =================================
 - [ ] Kubernetes (maybe with Azure; google/aws cost $73/month for a k8s cluster)
+- [ ] Terraform
+- [ ] Monitoring?
+- [ ] Alerting?
 
 High-Level Design
 =================
