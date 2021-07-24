@@ -65,7 +65,7 @@ fn rocket() -> _ {
 mod test {
     use super::{load_environment_variables, rocket};
     use crate::endpoints::{NewTaskResponse, TaskListResponse};
-    use crate::models::MODE_PENDING;
+    use crate::models::{Task, MODE_PENDING};
     use crate::schema::task;
     use diesel::prelude::*;
     use rocket::http::{ContentType, Status};
@@ -101,7 +101,7 @@ mod test {
     }
 
     #[test]
-    /// If we haven't created any tasks, then our tasks-getting endpoints should return an empty list.
+    /// If we haven't created any tasks, then the tasks-getting endpoints should return an empty list.
     fn test_get_tasks_when_no_tasks() {
         let client = Client::tracked(rocket()).unwrap();
 
@@ -125,7 +125,7 @@ mod test {
 
     #[test]
     /// It should be possible to create a new task,
-    /// and the task should be visible via our other endpoints once it exists.
+    /// and the task should be visible via the other endpoints once it exists.
     fn test_creating_task() {
         run_test(|| {
             let client = Client::tracked(rocket()).unwrap();
@@ -135,15 +135,28 @@ mod test {
                 .body(r#"{"name": "this is a test task"}"#)
                 .dispatch();
 
+            // The new task should have been created successfully.
             assert_eq!(response.status(), Status::Created);
-            let new_task = response.into_json::<NewTaskResponse>().unwrap();
-            assert_eq!(new_task.task.name, "this is a test task");
-            assert_eq!(new_task.task.mode, MODE_PENDING.0);
+            let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+            assert_eq!(new_task.name, "this is a test task");
+            assert_eq!(new_task.mode, MODE_PENDING.0);
 
-            // TODO query other endpoints
+            // The new task should appear in the get-all-tasks endpoints.
+            for url in ["/tasks/all", "/tasks/alive"] {
+                let response = client.get(url).dispatch();
+                assert_eq!(response.status(), Status::Ok);
+                assert_eq!(
+                    response.into_json::<TaskListResponse>(),
+                    Some(TaskListResponse {
+                        tasks: vec![new_task.clone()]
+                    })
+                );
+            }
 
-            let conn = get_db_conn();
-            delete_all_tasks(&conn);
+            // The new task should appear in the get-task-by-id endpoint.
+            let response = client.get(format!("/task/{}", new_task.id)).dispatch();
+            assert_eq!(response.status(), Status::Ok);
+            assert_eq!(response.into_json::<Task>(), Some(new_task));
         });
     }
 }

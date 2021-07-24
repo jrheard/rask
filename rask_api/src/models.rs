@@ -11,7 +11,7 @@ pub const MODE_COMPLETED: Mode = Mode("completed");
 #[allow(dead_code)]
 pub const MODE_DELETED: Mode = Mode("deleted");
 
-#[derive(Queryable, Deserialize, Serialize, Identifiable, PartialEq, Eq, Debug)]
+#[derive(Queryable, Deserialize, Serialize, Identifiable, PartialEq, Eq, Debug, Clone)]
 #[table_name = "task"]
 pub struct Task {
     pub id: i32,
