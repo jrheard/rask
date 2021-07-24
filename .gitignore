@@ -11,3 +11,4 @@ Cargo.lock
 
 postgres-data/
 .env
+.DS_Store

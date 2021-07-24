@@ -16,9 +16,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Start Containers
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Start containers
       run: docker-compose -f "docker-compose-test.yaml" up -d
+
     - name: Build
       run: cargo build --verbose
+
     - name: Run tests
-      run: RUST_TESTING=1 cargo test --verbose
+      run: cargo test --verbose
+      env:
+        RUST_TESTING: 1
