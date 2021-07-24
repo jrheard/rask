@@ -39,3 +39,4 @@ jobs:
       run: cargo test --verbose -- --test-threads=1
       env:
         RUST_TESTING: 1
+        RUST_BACKTRACE: 1

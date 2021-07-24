@@ -67,12 +67,17 @@ fn rocket() -> _ {
 mod test {
     use super::{load_environment_variables, rocket};
     use crate::endpoints::{NewTaskResponse, TaskListResponse};
-    use crate::models::{Task, MODE_PENDING};
+    use crate::models::{Task, MODE_COMPLETED, MODE_PENDING};
     use crate::schema::task;
     use diesel::prelude::*;
     use rocket::http::{ContentType, Status};
     use rocket::local::blocking::Client;
     use std::{env, panic};
+
+    /// Returns a rocket local blocking Client.
+    fn get_client() -> Client {
+        Client::tracked(rocket()).unwrap()
+    }
 
     /// Returns a connection to the database.
     fn get_db_conn() -> PgConnection {
@@ -85,6 +90,23 @@ mod test {
     /// Deletes all rows in the `task` table.
     fn delete_all_tasks(conn: &PgConnection) {
         diesel::delete(task::table).execute(conn).unwrap();
+    }
+
+    /// Creates a new Task, verifies that it was creates successfully, and returns it.
+    fn create_task(client: &Client, name: &str) -> Task {
+        let response = client
+            .post("/task")
+            .header(ContentType::JSON)
+            .body(format!(r#"{{"name": "{}"}}"#, name))
+            .dispatch();
+
+        // The new task should have been created successfully.
+        assert_eq!(response.status(), Status::Created);
+        let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+        assert_eq!(new_task.name, name);
+        assert_eq!(new_task.mode, MODE_PENDING.0);
+
+        new_task
     }
 
     /// Runs a chunk of test code in a setup/teardown block.
@@ -118,7 +140,7 @@ mod test {
     #[test]
     /// If we haven't created any tasks, then the tasks-getting endpoints should return an empty list.
     fn test_get_tasks_when_no_tasks() {
-        let client = Client::tracked(rocket()).unwrap();
+        let client = get_client();
         let expected_response = TaskListResponse { tasks: vec![] };
         assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
         assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
@@ -127,7 +149,7 @@ mod test {
     #[test]
     /// The API should return a 404 response on a request to /task/<unused_id>.
     fn test_get_task_by_id_404s_on_unknown_task() {
-        let client = Client::tracked(rocket()).unwrap();
+        let client = get_client();
         let response = client.get("/task/12345").dispatch();
         assert_eq!(response.status(), Status::NotFound);
     }
@@ -137,18 +159,8 @@ mod test {
     /// and the task should be visible via the other endpoints once it exists.
     fn test_creating_task() {
         run_test(|| {
-            let client = Client::tracked(rocket()).unwrap();
-            let response = client
-                .post("/task")
-                .header(ContentType::JSON)
-                .body(r#"{"name": "this is a test task"}"#)
-                .dispatch();
-
-            // The new task should have been created successfully.
-            assert_eq!(response.status(), Status::Created);
-            let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
-            assert_eq!(new_task.name, "this is a test task");
-            assert_eq!(new_task.mode, MODE_PENDING.0);
+            let client = get_client();
+            let new_task = create_task(&client, "this is a test task");
 
             // The new task should appear in the get-all-tasks endpoints.
             let expected_response = TaskListResponse {
@@ -161,6 +173,48 @@ mod test {
             let response = client.get(format!("/task/{}", new_task.id)).dispatch();
             assert_eq!(response.status(), Status::Ok);
             assert_eq!(response.into_json::<Task>(), Some(new_task));
+        });
+    }
+
+    #[test]
+    /// Verify the behavior of completing a task.
+    fn test_completing_task() {
+        run_test(|| {
+            let client = get_client();
+            let new_task = create_task(&client, "this is a test task");
+
+            // Mark the task as completed.
+            let response = client
+                .post(format!("/task/{}/complete", new_task.id))
+                .dispatch();
+            assert_eq!(response.status(), Status::Ok);
+
+            let completed_task = response.into_json::<Task>().unwrap();
+            assert_eq!(completed_task.name, new_task.name);
+            assert_eq!(completed_task.id, new_task.id);
+            assert_eq!(completed_task.mode, MODE_COMPLETED.0);
+
+            // The completed task should appear in the get-all-tasks endpoint...
+            assert_tasks_endpoint_contains(
+                &client,
+                "/tasks/all",
+                &TaskListResponse {
+                    tasks: vec![completed_task.clone()],
+                },
+            );
+            // ...but it shouldn't appear in the get-alive-tasks endpoint.
+            assert_tasks_endpoint_contains(
+                &client,
+                "/tasks/alive",
+                &TaskListResponse { tasks: vec![] },
+            );
+
+            // The get-task-by-id endpoint's response should look just like `completed_task`.
+            let response = client
+                .get(format!("/task/{}", completed_task.id))
+                .dispatch();
+            assert_eq!(response.status(), Status::Ok);
+            assert_eq!(response.into_json::<Task>(), Some(completed_task));
         });
     }
 }
