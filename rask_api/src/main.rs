@@ -121,7 +121,8 @@ mod test {
             Task {
                 name: task_to_complete.name.clone(),
                 id: task_to_complete.id,
-                mode: MODE_COMPLETED.0.to_string()
+                mode: MODE_COMPLETED.0.to_string(),
+                project: task_to_complete.project.clone()
             }
         );
 

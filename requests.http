@@ -16,7 +16,8 @@ POST http://127.0.0.1:8000/task HTTP/1.1
 content-type: application/json
 
 {
-    "name": "test task"
+    "name": "test task",
+    "project": "frank"
 }
 
 ###

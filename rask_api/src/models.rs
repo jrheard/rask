@@ -22,7 +22,7 @@ pub struct Task {
 
 #[derive(Insertable, Deserialize)]
 #[table_name = "task"]
-pub struct NewTask<'a> {
-    pub name: &'a str,
-    pub project: Option<&'a str>,
+pub struct NewTask {
+    pub name: String,
+    pub project: Option<String>,
 }
