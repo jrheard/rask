@@ -33,9 +33,8 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
 fn load_environment_variables() {
     if env::var("RUST_TESTING").is_ok() {
         dotenv::from_filename(".env.test").ok();
-    } else {
-        dotenv().ok();
     }
+    dotenv().ok();
 }
 
 #[launch]
@@ -190,9 +189,14 @@ mod test {
             assert_eq!(response.status(), Status::Ok);
 
             let completed_task = response.into_json::<Task>().unwrap();
-            assert_eq!(completed_task.name, new_task.name);
-            assert_eq!(completed_task.id, new_task.id);
-            assert_eq!(completed_task.mode, MODE_COMPLETED.0);
+            assert_eq!(
+                completed_task,
+                Task {
+                    name: new_task.name,
+                    id: new_task.id,
+                    mode: MODE_COMPLETED.0.to_string()
+                }
+            );
 
             // The completed task should appear in the get-all-tasks endpoint...
             assert_tasks_endpoint_contains(
