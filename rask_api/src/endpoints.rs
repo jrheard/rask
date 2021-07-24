@@ -42,9 +42,9 @@ pub struct TaskJSON {
     name: String,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct NewTaskResponse {
-    task: Task,
+    pub task: Task,
 }
 
 #[get("/task/<task_id>")]

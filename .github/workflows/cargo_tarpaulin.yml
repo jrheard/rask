@@ -34,7 +34,6 @@ jobs:
         env:
           RUST_TESTING: 1
         with:
-          version: '0.18.0'
           args: '-v -- --test-threads 1'
 
       - name: Upload to codecov.io
