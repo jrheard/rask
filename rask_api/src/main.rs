@@ -70,7 +70,7 @@ mod test {
     use diesel::prelude::*;
     use rocket::http::{ContentType, Status};
     use rocket::local::blocking::Client;
-    use std::env;
+    use std::{env, panic};
 
     /// Returns a connection to the database.
     fn get_db_conn() -> PgConnection {
@@ -83,6 +83,21 @@ mod test {
     /// Deletes all rows in the `task` table.
     fn delete_all_tasks(conn: &PgConnection) {
         diesel::delete(task::table).execute(conn).unwrap();
+    }
+
+    /// Runs a chunk of test code in a setup/teardown block.
+    /// Via https://medium.com/@ericdreichert/test-setup-and-teardown-in-rust-without-a-framework-ba32d97aa5ab .
+    fn run_test<T>(test: T)
+    where
+        T: FnOnce() + panic::UnwindSafe,
+    {
+        let conn = get_db_conn();
+
+        let result = panic::catch_unwind(|| test());
+
+        delete_all_tasks(&conn);
+
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -112,23 +127,23 @@ mod test {
     /// It should be possible to create a new task,
     /// and the task should be visible via our other endpoints once it exists.
     fn test_creating_task() {
-        let client = Client::tracked(rocket()).unwrap();
-        let response = client
-            .post("/task")
-            .header(ContentType::JSON)
-            .body(r#"{"name": "this is a test task"}"#)
-            .dispatch();
+        run_test(|| {
+            let client = Client::tracked(rocket()).unwrap();
+            let response = client
+                .post("/task")
+                .header(ContentType::JSON)
+                .body(r#"{"name": "this is a test task"}"#)
+                .dispatch();
 
-        assert_eq!(response.status(), Status::Created);
-        let new_task = response.into_json::<NewTaskResponse>().unwrap();
-        assert_eq!(new_task.task.name, "this is a test task");
-        assert_eq!(new_task.task.mode, MODE_PENDING.0);
+            assert_eq!(response.status(), Status::Created);
+            let new_task = response.into_json::<NewTaskResponse>().unwrap();
+            assert_eq!(new_task.task.name, "this is a test task");
+            assert_eq!(new_task.task.mode, MODE_PENDING.0);
 
-        // TODO query other endpoints
+            // TODO query other endpoints
 
-        // TODO use a teardown handler like https://medium.com/@ericdreichert/test-setup-and-teardown-in-rust-without-a-framework-ba32d97aa5ab
-
-        let conn = get_db_conn();
-        delete_all_tasks(&conn);
+            let conn = get_db_conn();
+            delete_all_tasks(&conn);
+        });
     }
 }
