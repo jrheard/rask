@@ -73,7 +73,7 @@ mod test {
     use rocket::local::blocking::Client;
     use std::{env, panic};
 
-    /// Returns a rocket local blocking Client.
+    /// Returns a local blocking Rocket Client.
     fn get_client() -> Client {
         Client::tracked(rocket()).unwrap()
     }
@@ -106,6 +106,26 @@ mod test {
         assert_eq!(new_task.mode, MODE_PENDING.0);
 
         new_task
+    }
+
+    /// Marks `task_to_complete` as being completed.
+    fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
+        let response = client
+            .post(format!("/task/{}/complete", task_to_complete.id))
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+
+        let completed_task = response.into_json::<Task>().unwrap();
+        assert_eq!(
+            completed_task,
+            Task {
+                name: task_to_complete.name.clone(),
+                id: task_to_complete.id,
+                mode: MODE_COMPLETED.0.to_string()
+            }
+        );
+
+        completed_task
     }
 
     /// Runs a chunk of test code in a setup/teardown block.
@@ -182,21 +202,7 @@ mod test {
             let client = get_client();
             let new_task = create_task(&client, "this is a test task");
 
-            // Mark the task as completed.
-            let response = client
-                .post(format!("/task/{}/complete", new_task.id))
-                .dispatch();
-            assert_eq!(response.status(), Status::Ok);
-
-            let completed_task = response.into_json::<Task>().unwrap();
-            assert_eq!(
-                completed_task,
-                Task {
-                    name: new_task.name,
-                    id: new_task.id,
-                    mode: MODE_COMPLETED.0.to_string()
-                }
-            );
+            let completed_task = mark_task_completed(&client, &new_task);
 
             // The completed task should appear in the get-all-tasks endpoint...
             assert_tasks_endpoint_contains(
@@ -219,6 +225,29 @@ mod test {
                 .dispatch();
             assert_eq!(response.status(), Status::Ok);
             assert_eq!(response.into_json::<Task>(), Some(completed_task));
+        });
+    }
+
+    #[test]
+    /// Verify that we don't crash if a user tries to complete a task twice.
+    fn test_completing_twice() {
+        run_test(|| {
+            let client = get_client();
+            let new_task = create_task(&client, "this is a test task");
+
+            let completed_task = mark_task_completed(&client, &new_task);
+            mark_task_completed(&client, &completed_task);
+        });
+    }
+
+    #[test]
+    /// Verify that we 404 if a user tries to complete a task that doesn't exist.
+    fn test_completing_nonexistent_task() {
+        run_test(|| {
+            let client = get_client();
+
+            let response = client.post(format!("/task/{}/complete", 12345)).dispatch();
+            assert_eq!(response.status(), Status::NotFound);
         });
     }
 }
