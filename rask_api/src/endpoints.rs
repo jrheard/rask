@@ -1,6 +1,6 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::models::{Task, MODE_COMPLETED};
+use crate::models::{NewTask, Task, MODE_COMPLETED};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -40,11 +40,21 @@ pub struct TaskListResponse {
 #[derive(Deserialize)]
 pub struct TaskJSON {
     name: String,
+    project: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct NewTaskResponse {
     pub task: Task,
+}
+
+impl<'a> From<&'a Json<TaskJSON>> for NewTask<'a> {
+    fn from(task_json: &'a Json<TaskJSON>) -> Self {
+        NewTask {
+            name: &task_json.name,
+            project: task_json.project.as_deref(),
+        }
+    }
 }
 
 #[get("/task/<task_id>")]
@@ -77,7 +87,8 @@ pub async fn create_task(
     task_json: Json<TaskJSON>,
 ) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
-        .run(move |conn| db_queries::create_task(conn, &task_json.name))
+        // FIXME: my initial attempt to convert TaskJSON into NewTask is hideous
+        .run(move |conn| db_queries::create_task(conn, (&task_json).into()))
         .await?;
 
     let response = NewTaskResponse { task: new_task };

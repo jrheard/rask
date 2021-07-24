@@ -17,10 +17,12 @@ pub struct Task {
     pub id: i32,
     pub name: String,
     pub mode: String,
+    pub project: Option<String>,
 }
 
-#[derive(Insertable)]
+#[derive(Insertable, Deserialize)]
 #[table_name = "task"]
 pub struct NewTask<'a> {
     pub name: &'a str,
+    pub project: Option<&'a str>,
 }
