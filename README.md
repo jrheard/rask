@@ -1,5 +1,7 @@
 [![codecov](https://codecov.io/gh/jrheard/rask/branch/main/graph/badge.svg?token=BAZT2L4F24)](https://codecov.io/gh/jrheard/rask)
 
+See [design-doc.txt](design-doc.txt) for more info.
+
 Testing
 =======
 

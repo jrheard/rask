@@ -196,6 +196,21 @@ mod test {
     }
 
     #[test]
+    /// If a user tries to create a task with incorrectly-formatted JSON, we should return a 422 response.
+    fn test_creating_task_with_garbage_input() {
+        run_test(|| {
+            let client = get_client();
+            let response = client
+                .post("/task")
+                .header(ContentType::JSON)
+                .body(r#"{"foo": "bar"}"#)
+                .dispatch();
+
+            assert_eq!(response.status(), Status::UnprocessableEntity);
+        });
+    }
+
+    #[test]
     /// Verify the behavior of completing a task.
     fn test_completing_task() {
         run_test(|| {
