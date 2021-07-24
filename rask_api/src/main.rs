@@ -64,6 +64,7 @@ fn rocket() -> _ {
 #[cfg(test)]
 mod test {
     use super::rocket;
+    use crate::endpoints::TaskListResponse;
     use rocket::http::Status;
     use rocket::local::blocking::Client;
 
@@ -75,7 +76,10 @@ mod test {
         for url in ["/tasks/all", "/tasks/alive"] {
             let response = client.get(url).dispatch();
             assert_eq!(response.status(), Status::Ok);
-            assert_eq!(response.into_string(), Some("{\"tasks\":[]}".to_string()));
+            assert_eq!(
+                response.into_json::<TaskListResponse>(),
+                Some(TaskListResponse { tasks: vec![] })
+            );
         }
     }
 

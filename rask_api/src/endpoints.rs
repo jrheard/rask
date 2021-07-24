@@ -32,9 +32,9 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
 
 type Result<T, E = RaskApiError> = std::result::Result<T, E>;
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct TaskListResponse {
-    tasks: Vec<Task>,
+    pub tasks: Vec<Task>,
 }
 
 #[derive(Deserialize)]

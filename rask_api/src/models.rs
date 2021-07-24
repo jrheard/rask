@@ -1,6 +1,6 @@
 use super::schema::task;
 use diesel::Queryable;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Mode(pub &'static str);
@@ -11,7 +11,7 @@ pub const MODE_COMPLETED: Mode = Mode("completed");
 #[allow(dead_code)]
 pub const MODE_DELETED: Mode = Mode("deleted");
 
-#[derive(Queryable, Serialize, Identifiable)]
+#[derive(Queryable, Deserialize, Serialize, Identifiable, PartialEq, Eq, Debug)]
 #[table_name = "task"]
 pub struct Task {
     pub id: i32,
