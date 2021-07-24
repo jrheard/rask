@@ -100,19 +100,34 @@ mod test {
         assert!(result.is_ok());
     }
 
+    fn assert_all_tasks_endpoint_contains(client: &Client, task_list_response: &TaskListResponse) {
+        let response = client.get("/tasks/all").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(
+            response.into_json::<TaskListResponse>().as_ref(),
+            Some(task_list_response)
+        );
+    }
+
+    fn assert_alive_tasks_endpoint_contains(
+        client: &Client,
+        task_list_response: &TaskListResponse,
+    ) {
+        let response = client.get("/tasks/alive").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(
+            response.into_json::<TaskListResponse>().as_ref(),
+            Some(task_list_response)
+        );
+    }
+
     #[test]
     /// If we haven't created any tasks, then the tasks-getting endpoints should return an empty list.
     fn test_get_tasks_when_no_tasks() {
         let client = Client::tracked(rocket()).unwrap();
-
-        for url in ["/tasks/all", "/tasks/alive"] {
-            let response = client.get(url).dispatch();
-            assert_eq!(response.status(), Status::Ok);
-            assert_eq!(
-                response.into_json::<TaskListResponse>(),
-                Some(TaskListResponse { tasks: vec![] })
-            );
-        }
+        let expected_response = TaskListResponse { tasks: vec![] };
+        assert_all_tasks_endpoint_contains(&client, &expected_response);
+        assert_alive_tasks_endpoint_contains(&client, &expected_response);
     }
 
     #[test]
@@ -142,16 +157,11 @@ mod test {
             assert_eq!(new_task.mode, MODE_PENDING.0);
 
             // The new task should appear in the get-all-tasks endpoints.
-            for url in ["/tasks/all", "/tasks/alive"] {
-                let response = client.get(url).dispatch();
-                assert_eq!(response.status(), Status::Ok);
-                assert_eq!(
-                    response.into_json::<TaskListResponse>(),
-                    Some(TaskListResponse {
-                        tasks: vec![new_task.clone()]
-                    })
-                );
-            }
+            let expected_response = TaskListResponse {
+                tasks: vec![new_task.clone()],
+            };
+            assert_all_tasks_endpoint_contains(&client, &expected_response);
+            assert_alive_tasks_endpoint_contains(&client, &expected_response);
 
             // The new task should appear in the get-task-by-id endpoint.
             let response = client.get(format!("/task/{}", new_task.id)).dispatch();
