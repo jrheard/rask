@@ -16,6 +16,9 @@ use thiserror::Error;
 pub enum RaskApiError {
     #[error(transparent)]
     DatabaseError(#[from] diesel::result::Error),
+
+    #[error("Intentional error thrown for use in tests")]
+    IntentionalErrorForTesting,
 }
 
 impl<'r> Responder<'r, 'static> for RaskApiError {
@@ -88,4 +91,9 @@ pub async fn complete_task(db: DBConn, task_id: i32) -> Result<Option<Json<Task>
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
+}
+
+#[get("/500")]
+pub async fn return_500() -> RaskApiError {
+    RaskApiError::IntentionalErrorForTesting
 }

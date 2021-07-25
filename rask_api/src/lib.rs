@@ -55,7 +55,8 @@ pub fn assemble_rocket() -> Rocket<Build> {
                 endpoints::get_alive_tasks,
                 endpoints::get_task_by_id,
                 endpoints::create_task,
-                endpoints::complete_task
+                endpoints::complete_task,
+                endpoints::return_500
             ],
         )
         .attach(DBConn::fairing())
