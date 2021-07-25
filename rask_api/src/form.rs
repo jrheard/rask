@@ -4,7 +4,7 @@ use rocket::form::{Form, FromForm};
 
 /// Task projects must be a single word or None.
 fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
-    match project.as_deref() {
+    match project {
         Some(project) if project.split(' ').count() != 1 => {
             Err(form::Error::validation("project must be a single word or blank").into())
         }
@@ -14,7 +14,7 @@ fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
 
 /// Task priorities must be a valid Priority value or None.
 fn validate_priority<'v>(priority: &Option<String>) -> form::Result<'v, ()> {
-    match priority.as_deref() {
+    match priority {
         None => Ok(()),
         Some(priority_str)
             if [PRIORITY_HIGH.0, PRIORITY_MEDIUM.0, PRIORITY_LOW.0]
