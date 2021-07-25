@@ -14,6 +14,7 @@ use std::env;
 mod db;
 mod db_queries;
 pub mod endpoints;
+mod form;
 pub mod models;
 pub mod schema;
 
