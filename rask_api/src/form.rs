@@ -1,6 +1,8 @@
 use crate::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
-use rocket::form;
-use rocket::form::{Form, FromForm};
+use chrono::NaiveDateTime;
+use rocket::form::{self, ValueField};
+use rocket::form::{Form, FromForm, FromFormField};
+use std::ops::Deref;
 
 /// Task projects must be a single word or None.
 fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
@@ -26,6 +28,26 @@ fn validate_priority<'v>(priority: &Option<String>) -> form::Result<'v, ()> {
         _ => Err(form::Error::validation("priority must be one of H,M,L or blank").into()),
     }
 }
+pub struct NaiveDateTimeFormField(NaiveDateTime);
+
+#[rocket::async_trait]
+impl<'r> FromFormField<'r> for NaiveDateTimeFormField {
+    fn from_value(form_value: ValueField<'r>) -> form::Result<'r, Self> {
+        let parsed = NaiveDateTime::parse_from_str(form_value.value, "%Y-%m-%d %H:%M:%S");
+
+        match parsed {
+            Ok(naive_date_time) => Ok(NaiveDateTimeFormField(naive_date_time)),
+            Err(_) => Err(form::Error::validation("invalid datetime").into()),
+        }
+    }
+}
+
+impl Deref for NaiveDateTimeFormField {
+    type Target = NaiveDateTime;
+    fn deref(&self) -> &NaiveDateTime {
+        &self.0
+    }
+}
 
 #[derive(FromForm)]
 pub struct TaskForm {
@@ -34,6 +56,7 @@ pub struct TaskForm {
     project: Option<String>,
     #[field(validate=validate_priority())]
     priority: Option<String>,
+    due: Option<NaiveDateTimeFormField>,
 }
 
 impl From<Form<TaskForm>> for NewTask {
@@ -43,6 +66,7 @@ impl From<Form<TaskForm>> for NewTask {
             name: form.name,
             project: form.project,
             priority: form.priority,
+            due: form.due.map(|due| due.0),
         }
     }
 }

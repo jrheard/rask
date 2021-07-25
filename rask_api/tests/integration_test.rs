@@ -121,6 +121,7 @@ fn test_creating_task() {
                 name: "this is a test task".to_string(),
                 project: None,
                 priority: None,
+                due: None,
             },
         );
 
@@ -164,6 +165,7 @@ fn test_completing_task() {
                 name: "this is a test task".to_string(),
                 project: None,
                 priority: None,
+                due: None,
             },
         );
 
@@ -204,6 +206,7 @@ fn test_completing_twice() {
                 name: "this is a test task".to_string(),
                 project: None,
                 priority: None,
+                due: None,
             },
         );
 
@@ -236,6 +239,7 @@ fn test_task_project_field() {
                 name: "clean dishes".to_string(),
                 project: Some("house".to_string()),
                 priority: None,
+                due: None,
             },
         );
 
@@ -248,6 +252,7 @@ fn test_task_project_field() {
                     name: "clean dishes".to_string(),
                     project: Some("multi word project".to_string()),
                     priority: None,
+                    due: None,
                 })
                 .unwrap(),
             )
@@ -270,6 +275,7 @@ fn test_task_priority_field() {
                 name: "clean dishes".to_string(),
                 project: Some("frank".to_string()),
                 priority: Some("M".to_string()),
+                due: None,
             },
         );
 
@@ -282,6 +288,7 @@ fn test_task_priority_field() {
                     name: "clean dishes".to_string(),
                     project: Some("frank".to_string()),
                     priority: Some("garbage".to_string()),
+                    due: None,
                 })
                 .unwrap(),
             )

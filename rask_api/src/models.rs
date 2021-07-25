@@ -35,4 +35,5 @@ pub struct NewTask {
     pub name: String,
     pub project: Option<String>,
     pub priority: Option<String>,
+    pub due: Option<chrono::NaiveDateTime>,
 }
