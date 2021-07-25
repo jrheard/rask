@@ -1,6 +1,8 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::models::{Task, MODE_COMPLETED};
+use crate::models::{NewTask, Task, MODE_COMPLETED};
+use rocket::form;
+use rocket::form::{Form, FromForm};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -37,11 +39,6 @@ pub struct TaskListResponse {
     pub tasks: Vec<Task>,
 }
 
-#[derive(Deserialize)]
-pub struct TaskJSON {
-    name: String,
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct NewTaskResponse {
     pub task: Task,
@@ -71,13 +68,40 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
     Ok(Json(TaskListResponse { tasks }))
 }
 
-#[post("/task", format = "json", data = "<task_json>")]
+/// Task projects must be a single word or None.
+fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
+    match project.as_deref() {
+        Some(project) if project.split(' ').count() != 1 => {
+            Err(form::Error::validation("project must be a single word or blank").into())
+        }
+        _ => Ok(()),
+    }
+}
+
+#[derive(FromForm)]
+pub struct TaskForm {
+    name: String,
+    #[field(validate=validate_project())]
+    project: Option<String>,
+}
+
+impl From<Form<TaskForm>> for NewTask {
+    fn from(form: Form<TaskForm>) -> Self {
+        let form = form.into_inner();
+        NewTask {
+            name: form.name,
+            project: form.project,
+        }
+    }
+}
+
+#[post("/task", data = "<task_form>")]
 pub async fn create_task(
     db: DBConn,
-    task_json: Json<TaskJSON>,
+    task_form: Form<TaskForm>,
 ) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
-        .run(move |conn| db_queries::create_task(conn, &task_json.name))
+        .run(move |conn| db_queries::create_task(conn, task_form.into()))
         .await?;
 
     let response = NewTaskResponse { task: new_task };

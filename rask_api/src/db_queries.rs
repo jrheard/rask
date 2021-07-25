@@ -26,8 +26,8 @@ pub fn update_mode(conn: &PgConnection, task_id: i32, mode: Mode) -> QueryResult
         .optional()
 }
 
-pub fn create_task(conn: &PgConnection, name: &str) -> QueryResult<Task> {
+pub fn create_task(conn: &PgConnection, new_task: NewTask) -> QueryResult<Task> {
     diesel::insert_into(task::table)
-        .values(NewTask { name })
+        .values(new_task)
         .get_result(conn)
 }
