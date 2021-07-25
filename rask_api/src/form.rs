@@ -2,7 +2,6 @@ use crate::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
 use chrono::NaiveDateTime;
 use rocket::form::{self, ValueField};
 use rocket::form::{Form, FromForm, FromFormField};
-use std::ops::Deref;
 
 /// Task projects must be a single word or None.
 fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
@@ -39,13 +38,6 @@ impl<'r> FromFormField<'r> for NaiveDateTimeFormField {
             Ok(naive_date_time) => Ok(NaiveDateTimeFormField(naive_date_time)),
             Err(_) => Err(form::Error::validation("invalid datetime").into()),
         }
-    }
-}
-
-impl Deref for NaiveDateTimeFormField {
-    type Target = NaiveDateTime;
-    fn deref(&self) -> &NaiveDateTime {
-        &self.0
     }
 }
 
