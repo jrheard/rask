@@ -297,3 +297,62 @@ fn test_task_priority_field() {
         assert_eq!(response.status(), Status::UnprocessableEntity);
     });
 }
+
+#[test]
+/// Test the behavior of tasks' .due field.
+fn test_task_due_field() {
+    run_test(|| {
+        let client = get_client();
+
+        // Creating a task with a valid due timestamp should work fine.
+        let response = client
+            .post("/task")
+            .header(ContentType::Form)
+            .body(
+                // 2021-07-25 23:56:04
+                "name=clean+dishes&project=house&due=2021-07-25%2023%3A56%3A04",
+            )
+            .dispatch();
+
+        // The new task should have been created successfully.
+        assert_eq!(response.status(), Status::Created);
+        let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+
+        assert_eq!(
+            new_task,
+            Task {
+                id: new_task.id,
+                name: "clean dishes".to_string(),
+                project: Some("house".to_string()),
+                mode: MODE_PENDING.0.to_string(),
+                priority: None,
+                due: Some(chrono::NaiveDate::from_ymd(2021, 7, 25).and_hms(23, 56, 4))
+            }
+        );
+
+        // Creating a task with a junk due date should give the task a null due date.
+        let response = client
+            .post("/task")
+            .header(ContentType::Form)
+            .body(
+                // 2021-07-25 23:56:04
+                "name=clean+dishes&project=house&due=garbage",
+            )
+            .dispatch();
+
+        // The new task should have been created successfully, but have no due date.
+        assert_eq!(response.status(), Status::Created);
+        let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+        assert_eq!(
+            new_task,
+            Task {
+                id: new_task.id,
+                name: "clean dishes".to_string(),
+                project: Some("house".to_string()),
+                mode: MODE_PENDING.0.to_string(),
+                priority: None,
+                due: None
+            }
+        );
+    });
+}
