@@ -356,15 +356,3 @@ fn test_task_due_field() {
         );
     });
 }
-
-#[test]
-fn test_500_response() {
-    let client = get_client();
-    let response = client.get("/500").dispatch();
-
-    assert_eq!(response.status(), Status::InternalServerError);
-    assert_eq!(
-        response.into_string(),
-        Some("Error: Intentional error thrown for use in tests".to_string())
-    );
-}

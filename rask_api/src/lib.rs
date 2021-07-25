@@ -47,18 +47,43 @@ pub fn assemble_rocket() -> Rocket<Build> {
         "pool_size" => 10.into()
     };
 
-    rocket::custom(rocket::Config::figment().merge(("databases", map! {"rask_db" => db})))
-        .mount(
-            "/",
-            routes![
-                endpoints::get_tasks,
-                endpoints::get_alive_tasks,
-                endpoints::get_task_by_id,
-                endpoints::create_task,
-                endpoints::complete_task,
-                endpoints::return_500
-            ],
-        )
-        .attach(DBConn::fairing())
-        .attach(AdHoc::on_ignite("Diesel Migrations", run_migrations))
+    let mut r =
+        rocket::custom(rocket::Config::figment().merge(("databases", map! {"rask_db" => db})))
+            .mount(
+                "/",
+                routes![
+                    endpoints::get_tasks,
+                    endpoints::get_alive_tasks,
+                    endpoints::get_task_by_id,
+                    endpoints::create_task,
+                    endpoints::complete_task,
+                ],
+            )
+            .attach(DBConn::fairing())
+            .attach(AdHoc::on_ignite("Diesel Migrations", run_migrations));
+
+    if cfg!(test) {
+        // This endpoint is only used for testing our 500 response codepath.
+        r = r.mount("/", routes![endpoints::return_500]);
+    }
+
+    r
+}
+
+#[cfg(test)]
+mod tests {
+    use super::assemble_rocket;
+    use rocket::{http::Status, local::blocking::Client};
+
+    #[test]
+    fn test_500_response() {
+        let client = Client::tracked(assemble_rocket()).unwrap();
+        let response = client.get("/500").dispatch();
+
+        assert_eq!(response.status(), Status::InternalServerError);
+        assert_eq!(
+            response.into_string(),
+            Some("Error: Intentional error thrown for use in tests".to_string())
+        );
+    }
 }
