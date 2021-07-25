@@ -1,9 +1,8 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::models;
-use crate::models::{NewTask, Task, MODE_COMPLETED};
+use crate::models::{NewTask, Task, MODE_COMPLETED, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
 use rocket::form;
-use rocket::form::{Form, FromForm, FromFormField};
+use rocket::form::{Form, FromForm};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -79,33 +78,13 @@ fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
     }
 }
 
-#[derive(FromFormField)]
-pub enum Priority {
-    #[field(value = "H")]
-    High,
-    #[field(value = "M")]
-    Medium,
-    #[field(value = "L")]
-    Low,
-}
-
-impl From<Priority> for String {
-    fn from(form_priority: Priority) -> Self {
-        match form_priority {
-            Priority::High => models::PRIORITY_HIGH.0,
-            Priority::Medium => models::PRIORITY_MEDIUM.0,
-            Priority::Low => models::PRIORITY_LOW.0,
-        }
-        .to_string()
-    }
-}
-
 #[derive(FromForm)]
 pub struct TaskForm {
     name: String,
     #[field(validate=validate_project())]
     project: Option<String>,
-    priority: Option<Priority>,
+    #[field(validate=one_of([PRIORITY_HIGH.0,PRIORITY_MEDIUM.0,PRIORITY_LOW.0]))]
+    priority: Option<String>,
 }
 
 impl From<Form<TaskForm>> for NewTask {
@@ -114,7 +93,7 @@ impl From<Form<TaskForm>> for NewTask {
         NewTask {
             name: form.name,
             project: form.project,
-            priority: form.priority.map(|priority| priority.into()),
+            priority: form.priority,
         }
     }
 }
