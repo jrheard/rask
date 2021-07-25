@@ -211,7 +211,7 @@ mod test {
             let response = client
                 .post("/task")
                 .header(ContentType::Form)
-                .body("foo=bar".to_string())
+                .body("foo=bar")
                 .dispatch();
 
             assert_eq!(response.status(), Status::UnprocessableEntity);
