@@ -78,6 +78,9 @@ docker-compose setup
 authentication for CLI done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
 requests to API need to be signed by private SSH key
 
+configuration for CLI will be something to figure out - probably a .raskrc?
+it'll have to know which IP to point at for the web api backend
+
 no clue how i'll do authentication for phone.
     if i allow mobile devices to access the system via an html webapp, i could do oauth with a single allowed user?
     if i only allow tasks to be entered via phone, i could just use email and have only my own email addresses whitelisted
