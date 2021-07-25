@@ -20,7 +20,7 @@ pub struct Task {
     pub project: Option<String>,
 }
 
-#[derive(Insertable, Deserialize)]
+#[derive(Insertable)]
 #[table_name = "task"]
 pub struct NewTask {
     pub name: String,

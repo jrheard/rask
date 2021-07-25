@@ -1,6 +1,7 @@
 use crate::db::DBConn;
 use crate::db_queries;
 use crate::models::{NewTask, Task, MODE_COMPLETED};
+use rocket::form::{Form, FromForm};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
@@ -66,13 +67,27 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
     Ok(Json(TaskListResponse { tasks }))
 }
 
-#[post("/task", format = "json", data = "<new_task>")]
+#[derive(FromForm)]
+pub struct TaskForm {
+    name: String,
+    project: Option<String>,
+}
+
+#[post("/task", data = "<task_form>")]
 pub async fn create_task(
     db: DBConn,
-    new_task: Json<NewTask>,
+    task_form: Form<TaskForm>,
 ) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
-        .run(move |conn| db_queries::create_task(conn, new_task.into_inner()))
+        .run(move |conn| {
+            db_queries::create_task(
+                conn,
+                NewTask {
+                    name: task_form.name.clone(),
+                    project: task_form.project.clone(),
+                },
+            )
+        })
         .await?;
 
     let response = NewTaskResponse { task: new_task };
