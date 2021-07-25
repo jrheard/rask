@@ -288,5 +288,33 @@ mod test {
 
     #[test]
     /// Test the behavior of tasks' .project field.
-    fn test_task_project_field() {}
+    fn test_task_project_field() {
+        run_test(|| {
+            let client = get_client();
+
+            // Creating a task with a one-word project name should work fine.
+            create_task(
+                &client,
+                &NewTask {
+                    name: "clean dishes".to_string(),
+                    project: Some("house".to_string()),
+                },
+            );
+
+            // Creating a task with a multi-word project should give a 422.
+            let response = client
+                .post("/task")
+                .header(ContentType::Form)
+                .body(
+                    serde_urlencoded::to_string(&NewTask {
+                        name: "clean dishes".to_string(),
+                        project: Some("multi word project".to_string()),
+                    })
+                    .unwrap(),
+                )
+                .dispatch();
+
+            assert_eq!(response.status(), Status::UnprocessableEntity);
+        });
+    }
 }
