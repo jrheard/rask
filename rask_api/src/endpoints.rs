@@ -1,6 +1,7 @@
 use crate::db::DBConn;
 use crate::db_queries;
 use crate::models::{NewTask, Task, MODE_COMPLETED};
+use rocket::form;
 use rocket::form::{Form, FromForm};
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
@@ -67,9 +68,19 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
     Ok(Json(TaskListResponse { tasks }))
 }
 
+fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
+    if let Some(project) = project.as_deref() {
+        if project.split(' ').count() != 1 {
+            return Err(form::Error::validation("project must be a single word").into());
+        }
+    }
+    Ok(())
+}
+
 #[derive(FromForm)]
 pub struct TaskForm {
     name: String,
+    #[field(validate=validate_project())]
     project: Option<String>,
 }
 
