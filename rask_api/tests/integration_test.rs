@@ -56,7 +56,8 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
             id: task_to_complete.id,
             mode: MODE_COMPLETED.0.to_string(),
             project: task_to_complete.project.clone(),
-            priority: task_to_complete.priority.clone()
+            priority: task_to_complete.priority.clone(),
+            due: task_to_complete.due
         }
     );
 

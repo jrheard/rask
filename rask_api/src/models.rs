@@ -23,9 +23,10 @@ pub const PRIORITY_LOW: Priority = Priority("L");
 pub struct Task {
     pub id: i32,
     pub name: String,
-    pub mode: String,
     pub project: Option<String>,
     pub priority: Option<String>,
+    pub mode: String,
+    pub due: Option<chrono::NaiveDateTime>,
 }
 
 #[derive(Insertable, Serialize)]
