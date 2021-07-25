@@ -55,7 +55,8 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
             name: task_to_complete.name.clone(),
             id: task_to_complete.id,
             mode: MODE_COMPLETED.0.to_string(),
-            project: task_to_complete.project.clone()
+            project: task_to_complete.project.clone(),
+            priority: task_to_complete.priority.clone()
         }
     );
 
@@ -118,6 +119,7 @@ fn test_creating_task() {
             &NewTask {
                 name: "this is a test task".to_string(),
                 project: None,
+                priority: None,
             },
         );
 
@@ -160,6 +162,7 @@ fn test_completing_task() {
             &NewTask {
                 name: "this is a test task".to_string(),
                 project: None,
+                priority: None,
             },
         );
 
@@ -199,6 +202,7 @@ fn test_completing_twice() {
             &NewTask {
                 name: "this is a test task".to_string(),
                 project: None,
+                priority: None,
             },
         );
 
@@ -230,6 +234,7 @@ fn test_task_project_field() {
             &NewTask {
                 name: "clean dishes".to_string(),
                 project: Some("house".to_string()),
+                priority: None,
             },
         );
 
@@ -241,6 +246,41 @@ fn test_task_project_field() {
                 serde_urlencoded::to_string(&NewTask {
                     name: "clean dishes".to_string(),
                     project: Some("multi word project".to_string()),
+                    priority: None,
+                })
+                .unwrap(),
+            )
+            .dispatch();
+
+        assert_eq!(response.status(), Status::UnprocessableEntity);
+    });
+}
+
+#[test]
+/// Test the behavior of tasks' .priority field.
+fn test_task_priority_field() {
+    run_test(|| {
+        let client = get_client();
+
+        // Creating a task with a valid priority value should work fine.
+        create_task(
+            &client,
+            &NewTask {
+                name: "clean dishes".to_string(),
+                project: Some("frank".to_string()),
+                priority: Some("M".to_string()),
+            },
+        );
+
+        // Creating a task with a junk priority should give a 422.
+        let response = client
+            .post("/task")
+            .header(ContentType::Form)
+            .body(
+                serde_urlencoded::to_string(&NewTask {
+                    name: "clean dishes".to_string(),
+                    project: Some("frank".to_string()),
+                    priority: Some("garbage".to_string()),
                 })
                 .unwrap(),
             )

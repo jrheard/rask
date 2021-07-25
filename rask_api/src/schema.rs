@@ -4,5 +4,6 @@ table! {
         name -> Text,
         mode -> Text,
         project -> Nullable<Text>,
+        priority -> Nullable<Text>,
     }
 }
