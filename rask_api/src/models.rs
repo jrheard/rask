@@ -11,6 +11,13 @@ pub const MODE_COMPLETED: Mode = Mode("completed");
 #[allow(dead_code)]
 pub const MODE_DELETED: Mode = Mode("deleted");
 
+#[derive(Clone, Copy, Debug)]
+pub struct Priority(pub &'static str);
+
+pub const PRIORITY_HIGH: Priority = Priority("H");
+pub const PRIORITY_MEDIUM: Priority = Priority("M");
+pub const PRIORITY_LOW: Priority = Priority("L");
+
 #[derive(Queryable, Deserialize, Serialize, Identifiable, PartialEq, Eq, Debug, Clone)]
 #[table_name = "task"]
 pub struct Task {
@@ -18,6 +25,7 @@ pub struct Task {
     pub name: String,
     pub mode: String,
     pub project: Option<String>,
+    pub priority: Option<String>,
 }
 
 #[derive(Insertable, Serialize)]
@@ -25,4 +33,5 @@ pub struct Task {
 pub struct NewTask {
     pub name: String,
     pub project: Option<String>,
+    pub priority: Option<String>,
 }
