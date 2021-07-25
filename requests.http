@@ -15,7 +15,7 @@ GET http://127.0.0.1:8000/task/20
 POST http://127.0.0.1:8000/task HTTP/1.1
 Content-Type: application/x-www-form-urlencoded
 
-name=foo&project=frank
+name=foo&project=frank&due=2021-07-25%2023%3A56%3A04
 
 ###
 

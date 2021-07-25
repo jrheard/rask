@@ -11,7 +11,7 @@ Use Cases
 - [ ] Mark a task completed (done in api)
 - [ ] Tasks can have an optional project (done in api)
 - [ ] Tasks can have an optional priority (done in api)
-- [ ] Tasks can have an optional due date
+- [ ] Tasks can have an optional due date (done in api)
 - [ ] Tasks can be edited a la `task edit`
 - [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
