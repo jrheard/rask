@@ -68,11 +68,11 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
     Ok(Json(TaskListResponse { tasks }))
 }
 
-/// Task projects must be a single word.
+/// Task projects must be a single word or None.
 fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
     match project.as_deref() {
         Some(project) if project.split(' ').count() != 1 => {
-            Err(form::Error::validation("project must be a single word").into())
+            Err(form::Error::validation("project must be a single word or blank").into())
         }
         _ => Ok(()),
     }
@@ -85,21 +85,23 @@ pub struct TaskForm {
     project: Option<String>,
 }
 
+impl From<Form<TaskForm>> for NewTask {
+    fn from(form: Form<TaskForm>) -> Self {
+        let form = form.into_inner();
+        NewTask {
+            name: form.name,
+            project: form.project,
+        }
+    }
+}
+
 #[post("/task", data = "<task_form>")]
 pub async fn create_task(
     db: DBConn,
     task_form: Form<TaskForm>,
 ) -> Result<Created<Json<NewTaskResponse>>> {
     let new_task = db
-        .run(move |conn| {
-            db_queries::create_task(
-                conn,
-                NewTask {
-                    name: task_form.name.clone(),
-                    project: task_form.project.clone(),
-                },
-            )
-        })
+        .run(move |conn| db_queries::create_task(conn, task_form.into()))
         .await?;
 
     let response = NewTaskResponse { task: new_task };
