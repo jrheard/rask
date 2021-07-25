@@ -71,8 +71,10 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
 /// Task projects must be a single word.
 fn validate_project<'v>(project: &Option<String>) -> form::Result<'v, ()> {
     match project.as_deref() {
-        Some(project) if project.split(' ').count() == 1 => Ok(()),
-        _ => Err(form::Error::validation("project must be a single word").into()),
+        Some(project) if project.split(' ').count() != 1 => {
+            Err(form::Error::validation("project must be a single word").into())
+        }
+        _ => Ok(()),
     }
 }
 

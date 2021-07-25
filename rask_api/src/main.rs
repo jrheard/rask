@@ -66,7 +66,7 @@ fn rocket() -> _ {
 mod test {
     use super::{load_environment_variables, rocket};
     use crate::endpoints::{NewTaskResponse, TaskListResponse};
-    use crate::models::{Task, MODE_COMPLETED, MODE_PENDING};
+    use crate::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
     use crate::schema::task;
     use diesel::prelude::*;
     use rocket::http::{ContentType, Status};
@@ -92,17 +92,18 @@ mod test {
     }
 
     /// Creates a new Task, verifies that it was creates successfully, and returns it.
-    fn create_task(client: &Client, name: &str) -> Task {
+    fn create_task(client: &Client, task_to_create: &NewTask) -> Task {
         let response = client
             .post("/task")
-            .header(ContentType::JSON)
-            .body(format!(r#"{{"name": "{}"}}"#, name))
+            .header(ContentType::Form)
+            .body(serde_urlencoded::to_string(task_to_create).unwrap())
             .dispatch();
 
         // The new task should have been created successfully.
         assert_eq!(response.status(), Status::Created);
         let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
-        assert_eq!(new_task.name, name);
+        assert_eq!(new_task.name, task_to_create.name);
+        assert_eq!(new_task.project, task_to_create.project);
         assert_eq!(new_task.mode, MODE_PENDING.0);
 
         new_task
@@ -180,7 +181,13 @@ mod test {
     fn test_creating_task() {
         run_test(|| {
             let client = get_client();
-            let new_task = create_task(&client, "this is a test task");
+            let new_task = create_task(
+                &client,
+                &NewTask {
+                    name: "this is a test task".to_string(),
+                    project: None,
+                },
+            );
 
             // The new task should appear in the get-all-tasks endpoints.
             let expected_response = TaskListResponse {
@@ -203,8 +210,8 @@ mod test {
             let client = get_client();
             let response = client
                 .post("/task")
-                .header(ContentType::JSON)
-                .body(r#"{"foo": "bar"}"#)
+                .header(ContentType::Form)
+                .body("foo=bar".to_string())
                 .dispatch();
 
             assert_eq!(response.status(), Status::UnprocessableEntity);
@@ -216,7 +223,13 @@ mod test {
     fn test_completing_task() {
         run_test(|| {
             let client = get_client();
-            let new_task = create_task(&client, "this is a test task");
+            let new_task = create_task(
+                &client,
+                &NewTask {
+                    name: "this is a test task".to_string(),
+                    project: None,
+                },
+            );
 
             let completed_task = mark_task_completed(&client, &new_task);
 
@@ -249,7 +262,13 @@ mod test {
     fn test_completing_twice() {
         run_test(|| {
             let client = get_client();
-            let new_task = create_task(&client, "this is a test task");
+            let new_task = create_task(
+                &client,
+                &NewTask {
+                    name: "this is a test task".to_string(),
+                    project: None,
+                },
+            );
 
             let completed_task = mark_task_completed(&client, &new_task);
             mark_task_completed(&client, &completed_task);
@@ -266,4 +285,8 @@ mod test {
             assert_eq!(response.status(), Status::NotFound);
         });
     }
+
+    #[test]
+    /// Test the behavior of tasks' .project field.
+    fn test_task_project_field() {}
 }
