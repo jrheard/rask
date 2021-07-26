@@ -1,30 +1,33 @@
-## Builder stage
+FROM rust:1.53 as planner
+WORKDIR /usr/rask
+RUN cargo install cargo-chef
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM rust:1.53 as cacher
+WORKDIR /usr/rask
+RUN cargo install cargo-chef
+COPY --from=planner /usr/rask/recipe.json recipe.json
+# TODO try removing --release temporarily to see what that does to build times
+RUN cargo chef cook --release --recipe-path recipe.json
+
 FROM rust:1.53 as builder
-
-# Built-dep-caching approach via https://blog.logrocket.com/packaging-a-rust-web-service-using-docker/
-WORKDIR /usr/src/rask
-COPY ./Cargo.toml ./Cargo.toml
-
-RUN USER=root cargo new --bin rask_api
-COPY ./rask_api/Cargo.toml ./rask_api/Cargo.toml
-
-RUN cargo build --release --bin rask_api
-RUN rm ./rask_api/src/*.rs
-
-ADD . ./
-
-RUN rm ./target/release/deps/rask_api*
+WORKDIR /usr/rask
+COPY . .
+COPY --from=cacher /usr/rask/target target
+COPY --from=cacher /usr/local/cargo /usr/local/cargo
 RUN cargo build --release --bin rask_api
 
-## Final stage
-FROM debian:buster-slim
-#RUN apt-get update && apt-get install -y extra-runtime-dependencies && rm -rf /var/lib/apt/lists/*
+FROM debian:buster-slim as runtime
+RUN apt-get update && apt-get install -y libpq-dev && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/rask
-COPY --from=builder /usr/src/rask/target/release/rask_api ./rask_api
+COPY --from=builder /usr/rask/target/release/rask_api ./rask_api
 
+RUN groupadd rask && useradd -g rask rask
 RUN chown rask:rask ./rask_api
 USER rask
 
 # TODO env vars?? or are they provided via docker-compose?
-CMD ["rask_api"]
+WORKDIR /usr/rask
+CMD ["./rask_api"]
