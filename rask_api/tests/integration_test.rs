@@ -407,3 +407,12 @@ fn test_editing_task() {
         );
     });
 }
+
+#[test]
+/// The healthcheck endpoint should return a 200.
+fn test_healthcheck_endpoint() {
+    let client = get_client();
+    let response = client.get("/healthcheck").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.into_string(), Some("hello!".to_string()));
+}

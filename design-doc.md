@@ -12,10 +12,10 @@ Use Cases
 - [ ] Tasks can have an optional project (done in api)
 - [ ] Tasks can have an optional priority (done in api)
 - [ ] Tasks can have an optional due date (done in api)
-- [ ] Tasks can be edited a la `task edit`
-- [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
+- [ ] Tasks can be edited a la `task edit` (done in api)
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
 - [ ] Nobody but me can edit/view my tasks
+- [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
 - [ ] Tasks have an "urgency" value that's derived from their various attributes using a simple formula
 - [ ] Tasks can be marked as "recurring", eg every two days, two weeks, two months; these tasks recur at midnight on the morning of a particular day, regardless of the time of day when they were created
 - [ ] "Waiting" a recurring task is easy/natural (the task is hidden for eg 6 months, and then the recurrence starts as normal afterward)

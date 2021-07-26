@@ -58,6 +58,7 @@ pub fn assemble_rocket() -> Rocket<Build> {
                     endpoints::create_task,
                     endpoints::complete_task,
                     endpoints::edit_task,
+                    endpoints::healthcheck,
                 ],
             )
             .attach(DBConn::fairing())

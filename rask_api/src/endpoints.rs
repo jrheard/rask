@@ -99,3 +99,8 @@ pub async fn edit_task(
 pub async fn return_500() -> RaskApiError {
     RaskApiError::IntentionalErrorForTesting
 }
+
+#[get("/healthcheck")]
+pub async fn healthcheck() -> &'static str {
+    "hello!"
+}
