@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use rask_api::endpoints::{NewTaskResponse, TaskListResponse};
+use rask_api::endpoints::TaskListResponse;
 use rask_api::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
 use rask_api::schema::task;
 use rocket::http::{ContentType, Status};
@@ -34,7 +34,7 @@ fn create_task(client: &Client, task_to_create: &NewTask) -> Task {
 
     // The new task should have been created successfully.
     assert_eq!(response.status(), Status::Created);
-    let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+    let new_task = response.into_json::<Task>().unwrap();
     assert_eq!(new_task.name, task_to_create.name);
     assert_eq!(new_task.project, task_to_create.project);
     assert_eq!(new_task.mode, MODE_PENDING.0);
@@ -314,14 +314,14 @@ fn test_task_due_field() {
             .post("/task")
             .header(ContentType::Form)
             .body(
-                // 2021-07-25 23:56:04
-                "name=clean+dishes&project=house&due=2021-07-25%2023%3A56%3A04",
+                // 2021-07-25T23:56:04
+                "name=clean+dishes&project=house&due=2021-07-25T23%3A56%3A04",
             )
             .dispatch();
 
         // The new task should have been created successfully.
         assert_eq!(response.status(), Status::Created);
-        let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+        let new_task = response.into_json::<Task>().unwrap();
 
         assert_eq!(
             new_task,
@@ -347,7 +347,7 @@ fn test_task_due_field() {
 
         // The new task should have been created successfully, but have no due date.
         assert_eq!(response.status(), Status::Created);
-        let new_task = response.into_json::<NewTaskResponse>().unwrap().task;
+        let new_task = response.into_json::<Task>().unwrap();
         assert_eq!(
             new_task,
             Task {
