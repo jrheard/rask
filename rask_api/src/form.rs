@@ -32,7 +32,7 @@ pub struct NaiveDateTimeFormField(NaiveDateTime);
 #[rocket::async_trait]
 impl<'r> FromFormField<'r> for NaiveDateTimeFormField {
     fn from_value(form_value: ValueField<'r>) -> form::Result<'r, Self> {
-        let parsed = NaiveDateTime::parse_from_str(form_value.value, "%Y-%m-%d %H:%M:%S");
+        let parsed = NaiveDateTime::parse_from_str(form_value.value, "%Y-%m-%dT%H:%M:%S");
 
         match parsed {
             Ok(naive_date_time) => Ok(NaiveDateTimeFormField(naive_date_time)),

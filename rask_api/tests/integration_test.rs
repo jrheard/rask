@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use rask_api::endpoints::{NewTaskResponse, TaskListResponse};
 use rask_api::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
@@ -62,6 +63,10 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
     );
 
     completed_task
+}
+
+fn get_example_datetime() -> NaiveDateTime {
+    chrono::NaiveDate::from_ymd(2021, 7, 25).and_hms(23, 56, 4)
 }
 
 /// Runs a chunk of test code in a setup/teardown block.
@@ -326,7 +331,7 @@ fn test_task_due_field() {
                 project: Some("house".to_string()),
                 mode: MODE_PENDING.0.to_string(),
                 priority: None,
-                due: Some(chrono::NaiveDate::from_ymd(2021, 7, 25).and_hms(23, 56, 4))
+                due: Some(get_example_datetime())
             }
         );
 
@@ -352,6 +357,52 @@ fn test_task_due_field() {
                 mode: MODE_PENDING.0.to_string(),
                 priority: None,
                 due: None
+            }
+        );
+    });
+}
+
+#[test]
+/// The /task/<task_id>/edit endpoint should let users edit a task.
+fn test_editing_task() {
+    run_test(|| {
+        let client = get_client();
+        let new_task = create_task(
+            &client,
+            &NewTask {
+                name: "this is a test task".to_string(),
+                project: None,
+                priority: None,
+                due: None,
+            },
+        );
+
+        let response = client
+            .post(format!("/task/{}/edit", new_task.id))
+            .header(ContentType::Form)
+            .body(
+                serde_urlencoded::to_string(NewTask {
+                    name: "clean litterbox".to_string(),
+                    project: Some("frank".to_string()),
+                    priority: Some("H".to_string()),
+                    due: Some(get_example_datetime()),
+                })
+                .unwrap(),
+            )
+            .dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+
+        let updated_task = response.into_json::<Task>().unwrap();
+        assert_eq!(
+            updated_task,
+            Task {
+                id: new_task.id,
+                name: "clean litterbox".to_string(),
+                mode: MODE_PENDING.0.to_string(),
+                project: Some("frank".to_string()),
+                priority: Some("H".to_string()),
+                due: Some(get_example_datetime()),
             }
         );
     });

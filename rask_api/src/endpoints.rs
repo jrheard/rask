@@ -42,6 +42,7 @@ pub struct TaskListResponse {
     pub tasks: Vec<Task>,
 }
 
+// TODO can i get rid of this?
 #[derive(Deserialize, Serialize)]
 pub struct NewTaskResponse {
     pub task: Task,
@@ -88,6 +89,18 @@ pub async fn create_task(
 #[post("/task/<task_id>/complete")]
 pub async fn complete_task(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::update_mode(conn, task_id, MODE_COMPLETED))
+        .await
+        .map(|row| row.map(Json))
+        .map_err(RaskApiError::DatabaseError)
+}
+
+#[post("/task/<task_id>/edit", data = "<task_form>")]
+pub async fn edit_task(
+    db: DBConn,
+    task_id: i32,
+    task_form: Form<TaskForm>,
+) -> Result<Option<Json<Task>>> {
+    db.run(move |conn| db_queries::update_task(conn, task_id, task_form.into()))
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)

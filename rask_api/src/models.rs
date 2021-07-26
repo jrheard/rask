@@ -29,7 +29,7 @@ pub struct Task {
     pub due: Option<chrono::NaiveDateTime>,
 }
 
-#[derive(Insertable, Serialize)]
+#[derive(Insertable, Serialize, AsChangeset)]
 #[table_name = "task"]
 pub struct NewTask {
     pub name: String,
