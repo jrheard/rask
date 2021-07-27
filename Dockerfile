@@ -1,3 +1,4 @@
+# See https://github.com/LukeMathWalker/cargo-chef#without-the-pre-built-image for context
 FROM rust:1.53 as planner
 WORKDIR /usr/rask
 RUN cargo install cargo-chef
@@ -28,6 +29,5 @@ RUN groupadd rask && useradd -g rask rask
 RUN chown rask:rask ./rask_api
 USER rask
 
-# TODO env vars?? or are they provided via docker-compose?
 WORKDIR /usr/rask
 CMD ["./rask_api"]
