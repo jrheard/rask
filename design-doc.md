@@ -44,6 +44,11 @@ Stretch Overengineering Exercises
 - [ ] Monitoring?
 - [ ] Alerting?
 
+Less Crazy Overengineering Exercises
+====================================
+Getting a full kubernetes setup running seems potentially expensive. What about https://devcenter.heroku.com/articles/container-registry-and-runtime ?
+I also need to look into Linode, it has a Kubernetes offering too.
+
 High-Level Design
 =================
 * Users primarily interact with the system via a CLI similar to `task`
