@@ -30,9 +30,6 @@ jobs:
     - name: Start containers
       run: docker-compose -f "docker-compose-test.yaml" up -d
 
-    - name: Build
-      run: cargo build --verbose
-
     - name: Run tests
       run: cargo test --verbose -- --test-threads=1
       env:
