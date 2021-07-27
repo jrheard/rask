@@ -12,6 +12,7 @@ services:
         image: "jrheard/rask_api:latest"
         environment:
             DATABASE_URL: "postgres://postgres:password@db:5432/rask"
+            ROCKET_ADDRESS: "0.0.0.0"
         ports:
             - "8001:8000"
         depends_on:
