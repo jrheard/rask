@@ -900,6 +900,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rask_cli"
+version = "0.1.0"
+
+[[package]]
+name = "rask_lib"
+version = "0.1.0"
+
+[[package]]
 name = "redox_syscall"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

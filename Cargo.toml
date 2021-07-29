@@ -2,4 +2,6 @@
 
 members = [
     "rask_api",
+    "rask_cli",
+    "rask_lib",
 ]
