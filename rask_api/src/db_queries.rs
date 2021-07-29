@@ -1,5 +1,5 @@
-use crate::models::{Mode, NewTask, Task, MODE_ACTIVE, MODE_PENDING};
-use crate::schema::task;
+use rask_lib::models::{Mode, NewTask, Task, MODE_ACTIVE, MODE_PENDING};
+use rask_lib::schema::task;
 use diesel::dsl::any;
 use diesel::prelude::*;
 use diesel::PgConnection;

@@ -892,6 +892,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "dotenv",
+ "rask_lib",
  "rocket",
  "rocket_sync_db_pools",
  "serde",
@@ -906,6 +907,11 @@ version = "0.1.0"
 [[package]]
 name = "rask_lib"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "serde",
+]
 
 [[package]]
 name = "redox_syscall"

@@ -1,7 +1,7 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::form::TaskForm;
-use crate::models::{Task, MODE_COMPLETED};
+use crate::form::{TaskForm, WrappedNewTask};
+use rask_lib::models::{Task, MODE_COMPLETED};
 use rocket::form::Form;
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
@@ -69,7 +69,7 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
 #[post("/task", data = "<task_form>")]
 pub async fn create_task(db: DBConn, task_form: Form<TaskForm>) -> Result<Created<Json<Task>>> {
     let new_task = db
-        .run(move |conn| db_queries::create_task(conn, task_form.into()))
+        .run(move |conn| db_queries::create_task(conn, WrappedNewTask::from(task_form).0))
         .await?;
 
     Ok(Created::new("/task").body(Json(new_task)))
@@ -89,7 +89,7 @@ pub async fn edit_task(
     task_id: i32,
     task_form: Form<TaskForm>,
 ) -> Result<Option<Json<Task>>> {
-    db.run(move |conn| db_queries::update_task(conn, task_id, task_form.into()))
+    db.run(move |conn| db_queries::update_task(conn, task_id, WrappedNewTask::from(task_form).0))
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)

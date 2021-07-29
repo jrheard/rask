@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate diesel_migrations;
 
 use crate::db::DBConn;
@@ -15,12 +13,10 @@ mod db;
 mod db_queries;
 pub mod endpoints;
 mod form;
-pub mod models;
-pub mod schema;
 
 /// Runs Diesel migrations as part of `rocket`'s initialization.
 async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
-    embed_migrations!();
+    embed_migrations!("../rask_lib/migrations");
 
     let conn = DBConn::get_one(&rocket).await.expect("database connection");
     conn.run(|c| embedded_migrations::run(c))
