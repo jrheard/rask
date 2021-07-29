@@ -1,5 +1,5 @@
-use crate::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
 use chrono::NaiveDateTime;
+use rask_lib::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
 use rocket::form::{self, ValueField};
 use rocket::form::{Form, FromForm, FromFormField};
 
@@ -51,14 +51,17 @@ pub struct TaskForm {
     due: Option<NaiveDateTimeFormField>,
 }
 
-impl From<Form<TaskForm>> for NewTask {
+// A wrapper type to work around the orphan rule.
+pub struct WrappedNewTask(pub NewTask);
+
+impl From<Form<TaskForm>> for WrappedNewTask {
     fn from(form: Form<TaskForm>) -> Self {
         let form = form.into_inner();
-        NewTask {
+        WrappedNewTask(NewTask {
             name: form.name,
             project: form.project,
             priority: form.priority,
             due: form.due.map(|due| due.0),
-        }
+        })
     }
 }

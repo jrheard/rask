@@ -1,8 +1,8 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use rask_api::endpoints::TaskListResponse;
-use rask_api::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
-use rask_api::schema::task;
+use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
+use rask_lib::schema::task;
 use rocket::http::{ContentType, Status};
 use rocket::local::blocking::Client;
 use std::{env, panic};
