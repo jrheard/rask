@@ -7,7 +7,6 @@ version = "0.1.0"
 
 [dependencies]
 rask_lib = { path = "../rask_lib" }
-# TODO see which deps are still necessary now that some functionality has been split out to rask_lib
 chrono = { version = "0.4", features = ["serde"]}
 diesel = {version = "1.4.4", features = ["postgres", "chrono"]}
 diesel_migrations = "1.4.0"

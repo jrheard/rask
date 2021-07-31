@@ -6,6 +6,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0"
+clap = "3.0.0-beta.2"
 rask_lib = { path = "../rask_lib" }
 
 reqwest = { version = "0.11", features = ["blocking", "json"] }

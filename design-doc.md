@@ -7,11 +7,12 @@ Use Cases
 =========
 - [ ] Enter a task (done in api)
 - [ ] Show list of active tasks (done in api)
-- [ ] Tasks have numeric IDs (done in api)
+- [X] Tasks have numeric IDs
 - [ ] Mark a task completed (done in api)
 - [ ] Tasks can have an optional project (done in api)
 - [ ] Tasks can have an optional priority (done in api)
 - [ ] Tasks can have an optional due date (done in api)
+- [ ] Tasks can be modified a la `task modify` (done in api)
 - [ ] Tasks can be edited a la `task edit` (done in api)
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
 - [ ] Nobody but me can edit/view my tasks
