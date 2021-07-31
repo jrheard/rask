@@ -1,6 +1,5 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use rask_api::endpoints::TaskListResponse;
 use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
 use rask_lib::schema::task;
 use rocket::http::{ContentType, Status};
@@ -84,16 +83,12 @@ where
     assert!(result.is_ok());
 }
 
-fn assert_tasks_endpoint_contains(
-    client: &Client,
-    uri: &str,
-    task_list_response: &TaskListResponse,
-) {
+fn assert_tasks_endpoint_contains(client: &Client, uri: &str, task_list_response: &[Task]) {
     let response = client.get(uri).dispatch();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(
-        response.into_json::<TaskListResponse>().as_ref(),
-        Some(task_list_response)
+        &response.into_json::<Vec<Task>>().unwrap(),
+        task_list_response
     );
 }
 
@@ -101,7 +96,7 @@ fn assert_tasks_endpoint_contains(
 /// If we haven't created any tasks, then the tasks-getting endpoints should return an empty list.
 fn test_get_tasks_when_no_tasks() {
     let client = get_client();
-    let expected_response = TaskListResponse { tasks: vec![] };
+    let expected_response = vec![];
     assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
     assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
 }
@@ -131,9 +126,7 @@ fn test_creating_task() {
         );
 
         // The new task should appear in the get-all-tasks endpoints.
-        let expected_response = TaskListResponse {
-            tasks: vec![new_task.clone()],
-        };
+        let expected_response = vec![new_task.clone()];
         assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
         assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
 
@@ -177,19 +170,9 @@ fn test_completing_task() {
         let completed_task = mark_task_completed(&client, &new_task);
 
         // The completed task should appear in the get-all-tasks endpoint...
-        assert_tasks_endpoint_contains(
-            &client,
-            "/tasks/all",
-            &TaskListResponse {
-                tasks: vec![completed_task.clone()],
-            },
-        );
+        assert_tasks_endpoint_contains(&client, "/tasks/all", &[completed_task.clone()]);
         // ...but it shouldn't appear in the get-alive-tasks endpoint.
-        assert_tasks_endpoint_contains(
-            &client,
-            "/tasks/alive",
-            &TaskListResponse { tasks: vec![] },
-        );
+        assert_tasks_endpoint_contains(&client, "/tasks/alive", &[]);
 
         // The get-task-by-id endpoint's response should look just like `completed_task`.
         let response = client

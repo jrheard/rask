@@ -8,7 +8,6 @@ use rocket::response::status::Created;
 use rocket::response::{Responder, Response};
 use rocket::serde::json::Json;
 use rocket::{get, post};
-use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use thiserror::Error;
 
@@ -37,11 +36,6 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
 
 type Result<T, E = RaskApiError> = std::result::Result<T, E>;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-pub struct TaskListResponse {
-    pub tasks: Vec<Task>,
-}
-
 #[get("/task/<task_id>")]
 pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
@@ -51,19 +45,19 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Option<Json<Task
 }
 
 #[get("/tasks/all")]
-pub async fn get_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
+pub async fn get_tasks(db: DBConn) -> Result<Json<Vec<Task>>> {
     let tasks = db.run(move |conn| db_queries::get_tasks(conn)).await?;
 
-    Ok(Json(TaskListResponse { tasks }))
+    Ok(Json(tasks))
 }
 
 #[get("/tasks/alive")]
-pub async fn get_alive_tasks(db: DBConn) -> Result<Json<TaskListResponse>> {
+pub async fn get_alive_tasks(db: DBConn) -> Result<Json<Vec<Task>>> {
     let tasks = db
         .run(move |conn| db_queries::get_alive_tasks(conn))
         .await?;
 
-    Ok(Json(TaskListResponse { tasks }))
+    Ok(Json(tasks))
 }
 
 #[post("/task", data = "<task_form>")]
