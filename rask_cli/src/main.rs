@@ -29,7 +29,19 @@ struct Complete {
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
-    Ok(())
+    println!("Marking task {} as completed...", task_id);
+
+    let client = reqwest::blocking::Client::new();
+    let result = client
+        .post(make_url(&format!("task/{}/complete", task_id)))
+        .send()?
+        .error_for_status()
+        .context("Unable to mark task completed")
+        .map(|_| ());
+
+    println!("Success!");
+
+    result
 }
 
 fn list_tasks() -> Result<()> {

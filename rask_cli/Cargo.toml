@@ -10,4 +10,4 @@ anyhow = "1.0"
 clap = "3.0.0-beta.2"
 rask_lib = { path = "../rask_lib" }
 
-reqwest = { version = "0.11", features = ["blocking", "json"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "stream"] }
