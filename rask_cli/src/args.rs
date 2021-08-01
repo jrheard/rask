@@ -8,6 +8,9 @@ pub enum ParseDecision<T> {
     Delete,
 }
 
+// Clap seems to treat an Ok(None) value as "this arg was unspecified", so we use
+// an eerily-Option-like ParseDecision enum to represent the situation where the user gave us
+// the string "none".
 fn parse_date_str_or_none_str(date_str: &str) -> ParseResult<ParseDecision<NaiveDateTime>> {
     if date_str == "none" {
         Ok(ParseDecision::Delete)
