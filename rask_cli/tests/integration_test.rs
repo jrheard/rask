@@ -33,8 +33,12 @@ where
     assert!(result.is_ok());
 }
 
+fn get_cmd() -> Command {
+    Command::cargo_bin("rask_cli").unwrap()
+}
+
 fn assert_list_output_contains(expected_output: &str) {
-    let mut cmd = Command::cargo_bin("rask_cli").unwrap();
+    let mut cmd = get_cmd();
     cmd.arg("list")
         .assert()
         .success()
@@ -42,7 +46,7 @@ fn assert_list_output_contains(expected_output: &str) {
 }
 
 fn assert_info_output_contains(task_id: &str, expected_output: &str) {
-    let mut cmd = Command::cargo_bin("rask_cli").unwrap();
+    let mut cmd = get_cmd();
     cmd.arg("info")
         .arg(task_id)
         .assert()
@@ -51,7 +55,7 @@ fn assert_info_output_contains(task_id: &str, expected_output: &str) {
 }
 
 fn create_task(input: NewTask) -> String {
-    let mut cmd = Command::cargo_bin("rask_cli").unwrap();
+    let mut cmd = get_cmd();
     let mut cmd = cmd.arg("create").arg(input.name);
 
     if let Some(project) = input.project {
@@ -77,7 +81,7 @@ fn create_task(input: NewTask) -> String {
 
 #[test]
 fn test_no_args() {
-    let mut cmd = Command::cargo_bin("rask_cli").unwrap();
+    let mut cmd = get_cmd();
     cmd.assert()
         .failure()
         .stderr(predicate::str::contains("USAGE"));
@@ -125,4 +129,26 @@ fn test_create_all_fields() {
         assert_info_output_contains(&id, "Priority:\tH");
         assert_info_output_contains(&id, "Due:\t\t07/31/2021");
     })
+}
+
+#[test]
+fn test_completing_task() {
+    let id = create_task(NewTask {
+        name: "hello there".to_string(),
+        project: None,
+        priority: None,
+        due: None,
+    });
+
+    assert_list_output_contains("Retrieved 1 tasks");
+    assert_list_output_contains("hello there");
+
+    let mut cmd = get_cmd();
+    cmd.arg("complete")
+        .arg(id)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Success"));
+
+    assert_list_output_contains("Retrieved 0 tasks");
 }
