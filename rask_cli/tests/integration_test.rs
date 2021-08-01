@@ -152,3 +152,34 @@ fn test_completing_task() {
 
     assert_list_output_contains("Retrieved 0 tasks");
 }
+
+#[test]
+fn test_modify_task() {
+    let id = create_task(NewTask {
+        name: "clean litterbox".to_string(),
+        project: Some("frank".to_string()),
+        priority: Some("H".to_string()),
+        due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
+    });
+
+    let mut cmd = get_cmd();
+    // Change the name and project, leave the priority as-is, and delete the due date.
+    cmd.args(&[
+        "modify",
+        &id,
+        "dust shelves",
+        "--project",
+        "house",
+        "--due",
+        "none",
+    ])
+    .assert()
+    .success()
+    .stdout(predicate::str::contains("Updated task"));
+
+    assert_info_output_contains(&id, &format!("Task {}", id));
+    assert_info_output_contains(&id, "dust shelves");
+    assert_info_output_contains(&id, "Project:\thouse");
+    assert_info_output_contains(&id, "Priority:\tH");
+    assert_info_output_contains(&id, "Due:\t\tN/A");
+}

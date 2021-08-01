@@ -96,11 +96,11 @@ pub struct ModifyOpts {
     /// The task's new name, if you want to change the name.
     pub name: Option<String>,
 
-    /// A one-word project name. A avlue of `none` deletes the project.
+    /// A one-word project name. A value of `none` deletes the project.
     #[clap(long, alias = "proj", parse(try_from_str = parse_project))]
     pub project: Option<String>,
 
-    /// One of H,M,L. A value of `none` deletes the priority.
+    /// A value of `none` deletes the priority.
     #[clap(long, alias = "prio", possible_values(&["H", "M", "L", "none"]))]
     pub priority: Option<String>,
 
