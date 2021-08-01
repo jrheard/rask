@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use predicates::prelude::*;
 use rask_lib::{models::NewTask, schema::task};
@@ -51,7 +52,21 @@ fn assert_info_output_contains(task_id: &str, expected_output: &str) {
 
 fn create_task(input: NewTask) -> String {
     let mut cmd = Command::cargo_bin("rask_cli").unwrap();
-    let assert = cmd.arg("create").arg(input.name).assert().success();
+    let mut cmd = cmd.arg("create").arg(input.name);
+
+    if let Some(project) = input.project {
+        cmd = cmd.arg("--project").arg(project);
+    }
+    if let Some(priority) = input.priority {
+        cmd = cmd.arg("--priority").arg(priority);
+    }
+    if let Some(due) = input.due {
+        cmd = cmd
+            .arg("--due")
+            .arg(due.format(rask_cli::DATE_FORMAT).to_string());
+    }
+
+    let assert = cmd.assert().success();
     let output = assert.get_output();
 
     let re = Regex::new(r"Successfully created task with ID ([0-9]+).\n").unwrap();
@@ -88,5 +103,26 @@ fn test_create_simple() {
 
         assert_info_output_contains(&id, &format!("Task {}", id));
         assert_info_output_contains(&id, "hello there");
+    })
+}
+
+#[test]
+fn test_create_all_fields() {
+    run_test(|| {
+        let id = create_task(NewTask {
+            name: "clean litterbox".to_string(),
+            project: Some("frank".to_string()),
+            priority: Some("H".to_string()),
+            due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
+        });
+
+        assert_list_output_contains("Retrieved 1 tasks");
+        assert_list_output_contains("clean litterbox");
+
+        assert_info_output_contains(&id, &format!("Task {}", id));
+        assert_info_output_contains(&id, "clean litterbox");
+        assert_info_output_contains(&id, "Project:\tfrank");
+        assert_info_output_contains(&id, "Priority:\tH");
+        assert_info_output_contains(&id, "Due:\t\t07/31/2021");
     })
 }

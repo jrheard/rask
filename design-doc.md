@@ -15,6 +15,7 @@ Use Cases
 - [X] Tasks can have an optional due date
 - [ ] Tasks can be modified a la `task modify` (done in api)
 - [ ] Tasks can be edited a la `task edit` (done in api)
+- [ ] Tasks can be deleted
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
 - [ ] Nobody but me can edit/view my tasks
 - [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
