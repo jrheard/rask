@@ -13,8 +13,9 @@ Use Cases
 - [X] Tasks can have an optional project
 - [X] Tasks can have an optional priority
 - [X] Tasks can have an optional due date
-- [ ] Tasks can be modified a la `task modify` (done in api)
+- [X] Tasks can be modified a la `task modify`
 - [ ] Tasks can be edited a la `task edit` (done in api)
+- [ ] Tasks can be uncompleted
 - [ ] Tasks can be deleted
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
 - [ ] Nobody but me can edit/view my tasks
@@ -24,6 +25,7 @@ Use Cases
 - [ ] "Waiting" a recurring task is easy/natural (the task is hidden for eg 6 months, and then the recurrence starts as normal afterward)
 - [ ] Different machines can specify different display-time profiles with a .raskrc file (primarily affects which columns are shown - what else?)
 - [ ] Some sort of `task gc` system automatically "compresses" tasks' separate numeric "display" IDs
+- [ ] `task undo`
 
 Stretch Use Cases
 =================

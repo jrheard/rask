@@ -31,6 +31,7 @@ pub struct Task {
 
 #[derive(Insertable, Serialize, AsChangeset, Debug)]
 #[table_name = "task"]
+#[changeset_options(treat_none_as_null = "true")]
 pub struct NewTask {
     pub name: String,
     pub project: Option<String>,
