@@ -16,7 +16,7 @@ services:
             context: .
             dockerfile: Dockerfile.test
         environment:
-            DATABASE_URL: "postgres://postgres:password@db:5432/rask"
+            DATABASE_URL: "postgres://postgres:password@db_test:5432/rask"
             ROCKET_ADDRESS: "0.0.0.0"
         ports:
             - "8002:8000"

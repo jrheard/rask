@@ -7,11 +7,17 @@ pub mod args;
 
 pub const DATE_FORMAT: &str = "%m/%d/%Y";
 
-const API_ROOT: &str = "http://localhost:8001";
+const API_ROOT: &str = "http://localhost";
 
 /// Turns an `endpoint` like `task/1` into a full API URL.
 fn make_url(endpoint: &str) -> String {
-    format!("{}/{}", API_ROOT, endpoint)
+    let port = if std::env::var_os("RUST_TESTING").is_some() {
+        "8002"
+    } else {
+        "8001"
+    };
+
+    format!("{}:{}/{}", API_ROOT, port, endpoint)
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
