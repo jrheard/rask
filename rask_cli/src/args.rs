@@ -30,14 +30,24 @@ pub struct ListOpts {}
 #[derive(Clap, Debug)]
 pub struct CreateOpts {
     pub name: String,
-    #[clap(long, alias = "proj")]
+
+    #[clap(long, alias = "proj", parse(try_from_str = parse_project))]
     pub project: Option<String>,
-    #[clap(long, alias = "prio")]
+
+    #[clap(long, alias = "prio", possible_values(&["H", "M", "L"]))]
     pub priority: Option<String>,
 
     /// Format: MM/DD/YYYY, e.g. 05/01/2021
     #[clap(short, long, parse(try_from_str = parse_date))]
     pub due: Option<NaiveDateTime>,
+}
+
+fn parse_project(project: &str) -> Result<String, String> {
+    if project.split(' ').count() == 1 {
+        Ok(project.to_string())
+    } else {
+        Err("Project must be one word".to_string())
+    }
 }
 
 fn parse_date(date_str: &str) -> ParseResult<NaiveDateTime> {
