@@ -1218,8 +1218,10 @@ dependencies = [
  "assert_cmd",
  "chrono",
  "clap",
+ "diesel",
  "predicates",
  "rask_lib",
+ "regex",
  "reqwest",
 ]
 
