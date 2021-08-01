@@ -5,6 +5,8 @@ use rask_lib::models;
 
 const API_ROOT: &str = "http://localhost:8001";
 
+const DATE_FORMAT: &str = "%m/%d/%Y";
+
 /// Turns an `endpoint` like `task/1` into a full API URL.
 fn make_url(endpoint: &str) -> String {
     format!("{}/{}", API_ROOT, endpoint)
@@ -20,10 +22,16 @@ struct Opts {
 enum SubCommand {
     Complete(CompleteOpts),
     Create(CreateOpts),
+    Info(InfoOpts),
     List(ListOpts),
 }
 #[derive(Clap)]
 struct CompleteOpts {
+    task_id: i32,
+}
+
+#[derive(Clap)]
+struct InfoOpts {
     task_id: i32,
 }
 
@@ -43,7 +51,7 @@ struct CreateOpts {
 }
 
 fn parse_date(date_str: &str) -> ParseResult<NaiveDateTime> {
-    Ok(NaiveDate::parse_from_str(date_str, "%m/%d/%Y")?.and_hms(0, 0, 0))
+    Ok(NaiveDate::parse_from_str(date_str, DATE_FORMAT)?.and_hms(0, 0, 0))
 }
 
 impl From<CreateOpts> for models::NewTask {
@@ -94,6 +102,33 @@ fn create_task(opts: CreateOpts) -> Result<()> {
     Ok(())
 }
 
+fn task_info(task_id: i32) -> Result<()> {
+    let task = reqwest::blocking::get(make_url(&format!("task/{}", task_id)))
+        .context("Unable to read task info from API")?
+        .json::<models::Task>()?;
+
+    println!("Task {}:", task.id);
+    println!("==============================");
+
+    println!("Name:\t\t{}", task.name);
+    println!(
+        "Project:\t{}",
+        task.project.unwrap_or_else(|| "N/A".to_string())
+    );
+    println!(
+        "Priority:\t{}",
+        task.priority.unwrap_or_else(|| "N/A".to_string())
+    );
+    println!(
+        "Due:\t\t{}",
+        task.due
+            .map(|due| due.format(DATE_FORMAT).to_string())
+            .unwrap_or_else(|| "N/A".to_string())
+    );
+
+    Ok(())
+}
+
 fn list_tasks() -> Result<()> {
     let tasks = reqwest::blocking::get(make_url("tasks/alive"))
         .context("Unable to read alive tasks from API")?
@@ -114,6 +149,7 @@ fn main() -> Result<()> {
     match opts.subcommand {
         SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id),
         SubCommand::Create(create_opts) => create_task(create_opts),
+        SubCommand::Info(InfoOpts { task_id }) => task_info(task_id),
         SubCommand::List(_) => list_tasks(),
     }
 }

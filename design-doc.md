@@ -7,6 +7,7 @@ Use Cases
 =========
 - [X] Enter a task
 - [X] Show list of active tasks
+- [X] Look up a task by ID
 - [X] Tasks have numeric IDs
 - [X] Mark a task completed
 - [X] Tasks can have an optional project
