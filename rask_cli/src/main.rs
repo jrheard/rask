@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use chrono::{format::ParseResult, NaiveDate, NaiveDateTime};
 use clap::Clap;
 use rask_lib::models;
 
@@ -17,15 +18,50 @@ struct Opts {
 
 #[derive(Clap)]
 enum SubCommand {
-    Complete(Complete),
-    List(List),
+    Complete(CompleteOpts),
+    Create(CreateOpts),
+    List(ListOpts),
+}
+#[derive(Clap)]
+struct CompleteOpts {
+    task_id: i32,
 }
 
 #[derive(Clap)]
-struct List {}
-#[derive(Clap)]
-struct Complete {
-    task_id: i32,
+struct ListOpts {}
+#[derive(Clap, Debug)]
+struct CreateOpts {
+    pub name: String,
+    #[clap(long, alias = "proj")]
+    pub project: Option<String>,
+    #[clap(long, alias = "prio")]
+    pub priority: Option<String>,
+
+    /// Format: MM/DD/YYYY, e.g. 05/01/2021
+    #[clap(short, long, parse(try_from_str = parse_date))]
+    pub due: Option<NaiveDateTime>,
+}
+
+fn parse_date(date_str: &str) -> ParseResult<NaiveDateTime> {
+    Ok(NaiveDate::parse_from_str(date_str, "%m/%d/%Y")?.and_hms(0, 0, 0))
+}
+
+impl From<CreateOpts> for models::NewTask {
+    fn from(opts: CreateOpts) -> Self {
+        let CreateOpts {
+            name,
+            project,
+            priority,
+            due,
+        } = opts;
+
+        models::NewTask {
+            name,
+            project,
+            priority,
+            due,
+        }
+    }
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
@@ -42,6 +78,20 @@ fn complete_task(task_id: i32) -> Result<()> {
     println!("Success!");
 
     result
+}
+
+fn create_task(opts: CreateOpts) -> Result<()> {
+    let client = reqwest::blocking::Client::new();
+    let created_task = client
+        .post(make_url("task"))
+        .form(&models::NewTask::from(opts))
+        .send()?
+        .error_for_status()
+        .context("Unable to mark task completed")?
+        .json::<models::Task>()?;
+
+    println!("Successfully created task with ID {}.", created_task.id);
+    Ok(())
 }
 
 fn list_tasks() -> Result<()> {
@@ -62,7 +112,8 @@ fn main() -> Result<()> {
     let opts = Opts::parse();
 
     match opts.subcommand {
-        SubCommand::Complete(Complete { task_id }) => complete_task(task_id),
+        SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id),
+        SubCommand::Create(create_opts) => create_task(create_opts),
         SubCommand::List(_) => list_tasks(),
     }
 }
