@@ -2,8 +2,8 @@ use assert_cmd::Command;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use predicates::prelude::*;
-use rask_lib::testing::run_test;
-use rask_lib::{models::NewTask, schema::api_token};
+use rask_lib::models::NewTask;
+use rask_lib::testing::{insert_example_api_token, run_test};
 use regex::Regex;
 use std::{env, panic, str};
 
@@ -21,11 +21,7 @@ fn get_cmd() -> Command {
 
 fn set_up_authorization() {
     let conn = get_db_conn();
-    diesel::insert_into(api_token::table)
-        .values(api_token::token.eq(EXAMPLE_TOKEN))
-        .on_conflict_do_nothing()
-        .execute(&conn)
-        .unwrap();
+    insert_example_api_token(&conn, EXAMPLE_TOKEN);
 
     env::set_var("RASK_API_TOKEN", EXAMPLE_TOKEN);
 }
@@ -193,4 +189,27 @@ fn test_modify_task() {
     assert_info_output_contains(&id, "Project:\thouse");
     assert_info_output_contains(&id, "Priority:\tH");
     assert_info_output_contains(&id, "Due:\t\tN/A");
+}
+
+#[test]
+fn test_api_token_handling() {
+    let conn = get_db_conn();
+    insert_example_api_token(&conn, EXAMPLE_TOKEN);
+
+    // Run the CLI with no RASK_API_TOKEN env var set.
+    let mut cmd = get_cmd();
+    cmd.arg("list").assert().failure();
+
+    for bad_token in [
+        "",
+        "foo",
+        "Bearer foo",
+        "Bearer foo bar baz",
+        "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
+    ] {
+        env::set_var("RASK_API_TOKEN", bad_token);
+
+        let mut cmd = get_cmd();
+        cmd.arg("list").assert().failure();
+    }
 }

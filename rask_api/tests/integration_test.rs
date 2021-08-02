@@ -1,8 +1,7 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
-use rask_lib::schema::api_token;
-use rask_lib::testing::run_test;
+use rask_lib::testing::{insert_example_api_token, run_test};
 use rocket::http::{ContentType, Header, Status};
 use rocket::local::blocking::{Client, LocalRequest};
 use std::{env, panic};
@@ -21,22 +20,14 @@ fn get_db_conn() -> PgConnection {
     PgConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url))
 }
 
-fn insert_example_api_token() {
-    let conn = get_db_conn();
-    diesel::insert_into(api_token::table)
-        .values(api_token::token.eq(EXAMPLE_TOKEN))
-        .on_conflict_do_nothing()
-        .execute(&conn)
-        .unwrap();
-}
-
 trait Authorizable {
     fn add_authorization_header(self) -> Self;
 }
 
 impl<'a> Authorizable for LocalRequest<'a> {
     fn add_authorization_header(self) -> Self {
-        insert_example_api_token();
+        let conn = get_db_conn();
+        insert_example_api_token(&conn, EXAMPLE_TOKEN);
 
         self.header(Header::new(
             "Authorization",
@@ -461,6 +452,9 @@ fn test_healthcheck_endpoint() {
 /// Requests should be 400'd or 401'd if they don't specify a valid API token.
 fn test_api_token_handling() {
     let client = get_client();
+
+    let conn = get_db_conn();
+    insert_example_api_token(&conn, EXAMPLE_TOKEN);
 
     // Make a request with no Authorization header.
     let response = client.get("/tasks/alive").dispatch();

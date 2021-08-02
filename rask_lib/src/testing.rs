@@ -25,3 +25,11 @@ where
 
     assert!(result.is_ok());
 }
+
+pub fn insert_example_api_token(conn: &PgConnection, example_token: &str) {
+    diesel::insert_into(api_token::table)
+        .values(api_token::token.eq(example_token))
+        .on_conflict_do_nothing()
+        .execute(conn)
+        .unwrap();
+}
