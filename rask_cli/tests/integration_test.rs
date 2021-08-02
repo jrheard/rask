@@ -70,27 +70,37 @@ fn create_task(input: NewTask) -> String {
 
 #[test]
 fn test_no_args() {
-    set_up_authorization();
+    run_test(
+        || {
+            set_up_authorization();
 
-    let mut cmd = get_cmd();
-    cmd.assert()
-        .failure()
-        .stderr(predicate::str::contains("USAGE"));
+            let mut cmd = get_cmd();
+            cmd.assert()
+                .failure()
+                .stderr(predicate::str::contains("USAGE"));
+        },
+        get_db_conn(),
+    );
 }
 
 #[test]
 fn test_list() {
-    set_up_authorization();
+    run_test(
+        || {
+            set_up_authorization();
 
-    assert_list_output_contains("Retrieved 0 tasks");
+            assert_list_output_contains("Retrieved 0 tasks");
+        },
+        get_db_conn(),
+    );
 }
 
 #[test]
 fn test_create_simple() {
-    set_up_authorization();
-
     run_test(
         || {
+            set_up_authorization();
+
             let id = create_task(NewTask {
                 name: "hello there".to_string(),
                 project: None,
@@ -110,10 +120,10 @@ fn test_create_simple() {
 
 #[test]
 fn test_create_all_fields() {
-    set_up_authorization();
-
     run_test(
         || {
+            set_up_authorization();
+
             let id = create_task(NewTask {
                 name: "clean litterbox".to_string(),
                 project: Some("frank".to_string()),
@@ -136,80 +146,95 @@ fn test_create_all_fields() {
 
 #[test]
 fn test_completing_task() {
-    set_up_authorization();
+    run_test(
+        || {
+            set_up_authorization();
 
-    let id = create_task(NewTask {
-        name: "hello there".to_string(),
-        project: None,
-        priority: None,
-        due: None,
-    });
+            let id = create_task(NewTask {
+                name: "hello there".to_string(),
+                project: None,
+                priority: None,
+                due: None,
+            });
 
-    assert_list_output_contains("Retrieved 1 tasks");
-    assert_list_output_contains("hello there");
+            assert_list_output_contains("Retrieved 1 tasks");
+            assert_list_output_contains("hello there");
 
-    let mut cmd = get_cmd();
-    cmd.arg("complete")
-        .arg(id)
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("Completed task"));
+            let mut cmd = get_cmd();
+            cmd.arg("complete")
+                .arg(id)
+                .assert()
+                .success()
+                .stdout(predicate::str::contains("Completed task"));
 
-    assert_list_output_contains("Retrieved 0 tasks");
+            assert_list_output_contains("Retrieved 0 tasks");
+        },
+        get_db_conn(),
+    );
 }
 
 #[test]
 fn test_modify_task() {
-    set_up_authorization();
+    run_test(
+        || {
+            set_up_authorization();
 
-    let id = create_task(NewTask {
-        name: "clean litterbox".to_string(),
-        project: Some("frank".to_string()),
-        priority: Some("H".to_string()),
-        due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
-    });
+            let id = create_task(NewTask {
+                name: "clean litterbox".to_string(),
+                project: Some("frank".to_string()),
+                priority: Some("H".to_string()),
+                due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
+            });
 
-    let mut cmd = get_cmd();
-    // Change the name and project, leave the priority as-is, and delete the due date.
-    cmd.args(&[
-        "modify",
-        &id,
-        "dust shelves",
-        "--project",
-        "house",
-        "--due",
-        "none",
-    ])
-    .assert()
-    .success()
-    .stdout(predicate::str::contains("Updated task"));
+            let mut cmd = get_cmd();
+            // Change the name and project, leave the priority as-is, and delete the due date.
+            cmd.args(&[
+                "modify",
+                &id,
+                "dust shelves",
+                "--project",
+                "house",
+                "--due",
+                "none",
+            ])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Updated task"));
 
-    assert_info_output_contains(&id, &format!("Task {}", id));
-    assert_info_output_contains(&id, "dust shelves");
-    assert_info_output_contains(&id, "Project:\thouse");
-    assert_info_output_contains(&id, "Priority:\tH");
-    assert_info_output_contains(&id, "Due:\t\tN/A");
+            assert_info_output_contains(&id, &format!("Task {}", id));
+            assert_info_output_contains(&id, "dust shelves");
+            assert_info_output_contains(&id, "Project:\thouse");
+            assert_info_output_contains(&id, "Priority:\tH");
+            assert_info_output_contains(&id, "Due:\t\tN/A");
+        },
+        get_db_conn(),
+    );
 }
 
 #[test]
 fn test_api_token_handling() {
-    let conn = get_db_conn();
-    insert_example_api_token(&conn, EXAMPLE_TOKEN);
+    run_test(
+        || {
+            let conn = get_db_conn();
+            insert_example_api_token(&conn, EXAMPLE_TOKEN);
 
-    // Run the CLI with no RASK_API_TOKEN env var set.
-    let mut cmd = get_cmd();
-    cmd.arg("list").assert().failure();
+            // Run the CLI with no RASK_API_TOKEN env var set.
+            let mut cmd = get_cmd();
+            cmd.arg("list").assert().failure();
 
-    for bad_token in [
-        "",
-        "foo",
-        "Bearer foo",
-        "Bearer foo bar baz",
-        "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
-    ] {
-        env::set_var("RASK_API_TOKEN", bad_token);
+            for bad_token in [
+                "",
+                "foo",
+                "Bearer foo",
+                "Bearer foo bar baz",
+                "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
+            ] {
+                env::set_var("RASK_API_TOKEN", bad_token);
 
-        let mut cmd = get_cmd();
-        cmd.arg("list").assert().failure();
-    }
+                let mut cmd = get_cmd();
+                cmd.arg("list").assert().failure();
+            }
+        },
+        get_db_conn(),
+    );
 }

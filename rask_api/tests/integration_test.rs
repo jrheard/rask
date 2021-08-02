@@ -95,10 +95,15 @@ fn assert_tasks_endpoint_contains(client: &Client, uri: &str, task_list_response
 #[test]
 /// If we haven't created any tasks, then the tasks-getting endpoints should return an empty list.
 fn test_get_tasks_when_no_tasks() {
-    let client = get_client();
-    let expected_response = vec![];
-    assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
-    assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
+    run_test(
+        || {
+            let client = get_client();
+            let expected_response = vec![];
+            assert_tasks_endpoint_contains(&client, "/tasks/all", &expected_response);
+            assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
+        },
+        get_db_conn(),
+    );
 }
 
 #[test]
@@ -451,30 +456,35 @@ fn test_healthcheck_endpoint() {
 #[test]
 /// Requests should be 400'd or 401'd if they don't specify a valid API token.
 fn test_api_token_handling() {
-    let client = get_client();
+    run_test(
+        || {
+            let client = get_client();
 
-    let conn = get_db_conn();
-    insert_example_api_token(&conn, EXAMPLE_TOKEN);
+            let conn = get_db_conn();
+            insert_example_api_token(&conn, EXAMPLE_TOKEN);
 
-    // Make a request with no Authorization header.
-    let response = client.get("/tasks/alive").dispatch();
-    assert_eq!(response.status(), Status::Unauthorized);
+            // Make a request with no Authorization header.
+            let response = client.get("/tasks/alive").dispatch();
+            assert_eq!(response.status(), Status::Unauthorized);
 
-    for bad_token in [
-        "",
-        "foo",
-        "Bearer foo",
-        "Bearer foo bar baz",
-        "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
-    ] {
-        let response = client
-            .get("/tasks/alive")
-            .header(Header::new(
-                "Authorization",
-                format!("Bearer {}", bad_token),
-            ))
-            .dispatch();
+            for bad_token in [
+                "",
+                "foo",
+                "Bearer foo",
+                "Bearer foo bar baz",
+                "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
+            ] {
+                let response = client
+                    .get("/tasks/alive")
+                    .header(Header::new(
+                        "Authorization",
+                        format!("Bearer {}", bad_token),
+                    ))
+                    .dispatch();
 
-        assert_ne!(response.status(), Status::Ok);
-    }
+                assert_ne!(response.status(), Status::Ok);
+            }
+        },
+        get_db_conn(),
+    );
 }
