@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use args::ModifyOpts;
 use clap::Clap;
 use rask_lib::models::{NewTask, Task};
-use reqwest::blocking::Client;
+use reqwest::blocking::{Client, RequestBuilder};
 use reqwest::header::AUTHORIZATION;
 use std::env;
 
@@ -24,11 +24,21 @@ fn make_url(endpoint: &str) -> String {
     format!("{}:{}/{}", API_ROOT, port, endpoint)
 }
 
+trait Authorizable {
+    fn add_authorization_header(self, token: &str) -> Self;
+}
+
+impl Authorizable for RequestBuilder {
+    fn add_authorization_header(self, token: &str) -> Self {
+        self.header(AUTHORIZATION, format!("Bearer {}", token))
+    }
+}
+
 fn get_task(task_id: i32, token: &str) -> Result<Task> {
     let client = Client::new();
     Ok(client
         .get(make_url(&format!("task/{}", task_id)))
-        .header(AUTHORIZATION, token)
+        .add_authorization_header(token)
         .send()
         .context("Unable to read task info from API")?
         .json::<Task>()?)
@@ -38,7 +48,7 @@ fn complete_task(task_id: i32, token: &str) -> Result<()> {
     let client = Client::new();
     let task = client
         .post(make_url(&format!("task/{}/complete", task_id)))
-        .header(AUTHORIZATION, token)
+        .add_authorization_header(token)
         .send()?
         .error_for_status()
         .context("Unable to mark task completed")?
@@ -52,7 +62,7 @@ fn create_task(opts: CreateOpts, token: &str) -> Result<()> {
     let client = Client::new();
     let created_task = client
         .post(make_url("task"))
-        .header(AUTHORIZATION, token)
+        .add_authorization_header(token)
         .form(&NewTask::from(opts))
         .send()?
         .error_for_status()
@@ -92,7 +102,7 @@ fn list_tasks(token: &str) -> Result<()> {
     let client = Client::new();
     let tasks = client
         .get(make_url("tasks/alive"))
-        .header(AUTHORIZATION, token)
+        .add_authorization_header(token)
         .send()
         .context("Unable to read alive tasks from API")?
         .json::<Vec<Task>>()?;
@@ -132,7 +142,7 @@ fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
     let client = Client::new();
     let updated_task = client
         .post(make_url(&format!("task/{}/edit", task.id)))
-        .header(AUTHORIZATION, token)
+        .add_authorization_header(token)
         .form(&new_task_values)
         .send()?
         .error_for_status()
