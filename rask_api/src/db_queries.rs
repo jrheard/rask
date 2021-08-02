@@ -1,8 +1,10 @@
-use rask_lib::models::{Mode, NewTask, Task, MODE_ACTIVE, MODE_PENDING};
-use rask_lib::schema::task;
-use diesel::dsl::any;
+use diesel::dsl::{any, exists};
 use diesel::prelude::*;
+use diesel::select;
 use diesel::PgConnection;
+use rask_lib::models::{Mode, NewTask, Task, MODE_ACTIVE, MODE_PENDING};
+use rask_lib::schema::api_token;
+use rask_lib::schema::task;
 
 pub fn get_tasks(conn: &PgConnection) -> QueryResult<Vec<Task>> {
     task::table.order(task::id).load(conn)
@@ -41,4 +43,8 @@ pub fn update_task(
         .set(updated_fields)
         .get_result(conn)
         .optional()
+}
+
+pub fn token_exists(conn: &PgConnection, token: &str) -> QueryResult<bool> {
+    select(exists(api_token::table.find(token))).get_result(conn)
 }
