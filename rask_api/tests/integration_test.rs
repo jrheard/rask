@@ -1,10 +1,12 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
-use rask_lib::schema::task;
-use rocket::http::{ContentType, Status};
-use rocket::local::blocking::Client;
+use rask_lib::schema::{api_token, task};
+use rocket::http::{ContentType, Header, Status};
+use rocket::local::blocking::{Client, LocalRequest};
 use std::{env, panic};
+
+const EXAMPLE_TOKEN: &str = "9fc51cf8-461c-4092-a705-476c98e358cb";
 
 /// Returns a local blocking Rocket Client.
 fn get_client() -> Client {
@@ -23,11 +25,37 @@ fn delete_all_tasks(conn: &PgConnection) {
     diesel::delete(task::table).execute(conn).unwrap();
 }
 
+/// Deletes all rows in the `api_token` table.
+fn delete_all_tokens(conn: &PgConnection) {
+    diesel::delete(api_token::table).execute(conn).unwrap();
+}
+
+trait Authorizable {
+    fn add_authorization_header(self) -> Self;
+}
+
+impl<'a> Authorizable for LocalRequest<'a> {
+    fn add_authorization_header(self) -> Self {
+        let conn = get_db_conn();
+        diesel::insert_into(api_token::table)
+            .values(api_token::token.eq(EXAMPLE_TOKEN))
+            .on_conflict_do_nothing()
+            .execute(&conn)
+            .unwrap();
+
+        self.header(Header::new(
+            "Authorization",
+            format!("Bearer {}", EXAMPLE_TOKEN),
+        ))
+    }
+}
+
 /// Creates a new Task, verifies that it was creates successfully, and returns it.
 fn create_task(client: &Client, task_to_create: &NewTask) -> Task {
     let response = client
         .post("/task")
         .header(ContentType::Form)
+        .add_authorization_header()
         .body(serde_urlencoded::to_string(task_to_create).unwrap())
         .dispatch();
 
@@ -45,6 +73,7 @@ fn create_task(client: &Client, task_to_create: &NewTask) -> Task {
 fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
     let response = client
         .post(format!("/task/{}/complete", task_to_complete.id))
+        .add_authorization_header()
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
@@ -79,12 +108,13 @@ where
     let result = panic::catch_unwind(|| test());
 
     delete_all_tasks(&conn);
+    delete_all_tokens(&conn);
 
     assert!(result.is_ok());
 }
 
 fn assert_tasks_endpoint_contains(client: &Client, uri: &str, task_list_response: &[Task]) {
-    let response = client.get(uri).dispatch();
+    let response = client.get(uri).add_authorization_header().dispatch();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(
         &response.into_json::<Vec<Task>>().unwrap(),
@@ -104,9 +134,14 @@ fn test_get_tasks_when_no_tasks() {
 #[test]
 /// The API should return a 404 response on a request to /task/<unused_id>.
 fn test_get_task_by_id_404s_on_unknown_task() {
-    let client = get_client();
-    let response = client.get("/task/12345").dispatch();
-    assert_eq!(response.status(), Status::NotFound);
+    run_test(|| {
+        let client = get_client();
+        let response = client
+            .get("/task/12345")
+            .add_authorization_header()
+            .dispatch();
+        assert_eq!(response.status(), Status::NotFound);
+    });
 }
 
 #[test]
@@ -131,7 +166,10 @@ fn test_creating_task() {
         assert_tasks_endpoint_contains(&client, "/tasks/alive", &expected_response);
 
         // The new task should appear in the get-task-by-id endpoint.
-        let response = client.get(format!("/task/{}", new_task.id)).dispatch();
+        let response = client
+            .get(format!("/task/{}", new_task.id))
+            .add_authorization_header()
+            .dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(response.into_json::<Task>(), Some(new_task));
     });
@@ -144,6 +182,7 @@ fn test_creating_task_with_garbage_input() {
         let client = get_client();
         let response = client
             .post("/task")
+            .add_authorization_header()
             .header(ContentType::Form)
             .body("foo=bar")
             .dispatch();
@@ -177,6 +216,7 @@ fn test_completing_task() {
         // The get-task-by-id endpoint's response should look just like `completed_task`.
         let response = client
             .get(format!("/task/{}", completed_task.id))
+            .add_authorization_header()
             .dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(response.into_json::<Task>(), Some(completed_task));
@@ -209,7 +249,10 @@ fn test_completing_nonexistent_task() {
     run_test(|| {
         let client = get_client();
 
-        let response = client.post(format!("/task/{}/complete", 12345)).dispatch();
+        let response = client
+            .post(format!("/task/{}/complete", 12345))
+            .add_authorization_header()
+            .dispatch();
         assert_eq!(response.status(), Status::NotFound);
     });
 }
@@ -235,6 +278,7 @@ fn test_task_project_field() {
         let response = client
             .post("/task")
             .header(ContentType::Form)
+            .add_authorization_header()
             .body(
                 serde_urlencoded::to_string(&NewTask {
                     name: "clean dishes".to_string(),
@@ -271,6 +315,7 @@ fn test_task_priority_field() {
         let response = client
             .post("/task")
             .header(ContentType::Form)
+            .add_authorization_header()
             .body(
                 serde_urlencoded::to_string(&NewTask {
                     name: "clean dishes".to_string(),
@@ -296,6 +341,7 @@ fn test_task_due_field() {
         let response = client
             .post("/task")
             .header(ContentType::Form)
+            .add_authorization_header()
             .body(
                 // 2021-07-25T23:56:04
                 "name=clean+dishes&project=house&due=2021-07-25T23%3A56%3A04",
@@ -322,6 +368,7 @@ fn test_task_due_field() {
         let response = client
             .post("/task")
             .header(ContentType::Form)
+            .add_authorization_header()
             .body(
                 // 2021-07-25 23:56:04
                 "name=clean+dishes&project=house&due=garbage",
@@ -363,6 +410,7 @@ fn test_editing_task() {
         let response = client
             .post(format!("/task/{}/edit", new_task.id))
             .header(ContentType::Form)
+            .add_authorization_header()
             .body(
                 serde_urlencoded::to_string(NewTask {
                     name: "clean litterbox".to_string(),
