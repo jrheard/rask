@@ -21,18 +21,22 @@ fn get_db_conn() -> PgConnection {
     PgConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url))
 }
 
+fn insert_example_api_token() {
+    let conn = get_db_conn();
+    diesel::insert_into(api_token::table)
+        .values(api_token::token.eq(EXAMPLE_TOKEN))
+        .on_conflict_do_nothing()
+        .execute(&conn)
+        .unwrap();
+}
+
 trait Authorizable {
     fn add_authorization_header(self) -> Self;
 }
 
 impl<'a> Authorizable for LocalRequest<'a> {
     fn add_authorization_header(self) -> Self {
-        let conn = get_db_conn();
-        diesel::insert_into(api_token::table)
-            .values(api_token::token.eq(EXAMPLE_TOKEN))
-            .on_conflict_do_nothing()
-            .execute(&conn)
-            .unwrap();
+        insert_example_api_token();
 
         self.header(Header::new(
             "Authorization",
@@ -451,4 +455,32 @@ fn test_healthcheck_endpoint() {
     let response = client.get("/healthcheck").dispatch();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(response.into_string(), Some("hello!".to_string()));
+}
+
+#[test]
+/// Requests should be 400'd or 401'd if they don't specify a valid API token.
+fn test_api_token_handling() {
+    let client = get_client();
+
+    // Make a request with no Authorization header.
+    let response = client.get("/tasks/alive").dispatch();
+    assert_eq!(response.status(), Status::Unauthorized);
+
+    for bad_token in [
+        "",
+        "foo",
+        "Bearer foo",
+        "Bearer foo bar baz",
+        "Bearer 309dcde0-5bc4-4e9f-a32a-b5bbee54eb81",
+    ] {
+        let response = client
+            .get("/tasks/alive")
+            .header(Header::new(
+                "Authorization",
+                format!("Bearer {}", bad_token),
+            ))
+            .dispatch();
+
+        assert_ne!(response.status(), Status::Ok);
+    }
 }
