@@ -1,5 +1,5 @@
 use rocket::http::Status;
-use rocket::outcome::Outcome;
+use rocket::outcome::Outcome::{Failure, Success};
 use rocket::request::{self, FromRequest};
 use rocket::Request;
 
@@ -26,39 +26,53 @@ fn parse_auth_header(header: &str) -> Option<&str> {
     Some(split_header[1])
 }
 
+async fn validate_request_api_token(req: &Request<'_>) -> Result<(), ApiTokenError> {
+    let auth_header = req
+        .headers()
+        .get_one("Authorization")
+        .ok_or(ApiTokenError::NoHeader)?;
+
+    let token = parse_auth_header(auth_header)
+        .ok_or(ApiTokenError::MalformedHeader)?
+        .to_string();
+
+    let db = req
+        .guard::<DBConn>()
+        .await
+        .success_or(ApiTokenError::DatabaseError)?;
+
+    let token_exists = db
+        .run(move |conn| db_queries::token_exists(conn, &token))
+        .await
+        .map_err(|_| ApiTokenError::DatabaseError)?;
+
+    if token_exists {
+        Ok(())
+    } else {
+        Err(ApiTokenError::InvalidToken)
+    }
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for ApiToken {
     type Error = ApiTokenError;
 
-    // TODO rewrite
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let auth_header = req.headers().get_one("Authorization");
-
-        if auth_header.is_none() {
-            return Outcome::Failure((Status::Unauthorized, ApiTokenError::NoHeader));
-        }
-
-        let parsed_header = parse_auth_header(auth_header.unwrap());
-        if parsed_header.is_none() {
-            return Outcome::Failure((Status::BadRequest, ApiTokenError::MalformedHeader));
-        }
-
-        let token = parsed_header.unwrap().to_string();
-
-        if let Outcome::Success(db) = req.guard::<DBConn>().await {
-            let token_row = db
-                .run(move |conn| db_queries::token_exists(conn, &token))
-                .await;
-
-            match token_row {
-                Ok(true) => Outcome::Success(ApiToken),
-                Ok(false) => Outcome::Failure((Status::Unauthorized, ApiTokenError::InvalidToken)),
-                Err(_) => {
-                    Outcome::Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
-                }
+        match validate_request_api_token(req).await {
+            Ok(()) => Success(ApiToken),
+            // TODO - is there some way to do an `except foo::errorvariant as e` here?
+            Err(ApiTokenError::DatabaseError) => {
+                Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
             }
-        } else {
-            Outcome::Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
+            Err(ApiTokenError::InvalidToken) => {
+                Failure((Status::Unauthorized, ApiTokenError::InvalidToken))
+            }
+            Err(ApiTokenError::MalformedHeader) => {
+                Failure((Status::BadRequest, ApiTokenError::MalformedHeader))
+            }
+            Err(ApiTokenError::NoHeader) => {
+                Failure((Status::Unauthorized, ApiTokenError::MalformedHeader))
+            }
         }
     }
 }

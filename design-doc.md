@@ -38,21 +38,19 @@ Development Setup
 =================
 - [X] Tests run in CI
 - [X] Test coverage is generated in CI
-- [ ] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
+- [X] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
 - [ ] Manual deploy to production on my linode (blocked on setting up auth first)
 - [ ] CD to production
 
 Stretch Overengineering Exercises
 =================================
-- [ ] Kubernetes (maybe with Azure; google/aws cost $73/month for a k8s cluster)
-- [ ] Terraform
+- [ ] Kubernetes? (maybe with Azure; google/aws cost $73/month for a k8s cluster)
+- [ ] Terraform?
+- [ ] ECS instead?
+- [ ] Heroku instead?
+- [ ] Logging? (TODO: can/should authorization header values be kept out of logs?)
 - [ ] Monitoring?
 - [ ] Alerting?
-
-Less Crazy Overengineering Exercises
-====================================
-Getting a full kubernetes setup running seems potentially expensive. What about https://devcenter.heroku.com/articles/container-registry-and-runtime ?
-I also need to look into Linode, it has a Kubernetes offering too.
 
 High-Level Design
 =================
