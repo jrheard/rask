@@ -60,7 +60,6 @@ impl<'r> FromRequest<'r> for ApiToken {
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
         match validate_request_api_token(req).await {
             Ok(()) => Success(ApiToken),
-            // TODO - is there some way to do an `except foo::errorvariant as e` here?
             Err(ApiTokenError::DatabaseError) => {
                 Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
             }
