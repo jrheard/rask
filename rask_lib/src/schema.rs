@@ -1,4 +1,10 @@
 table! {
+    api_token (token) {
+        token -> Text,
+    }
+}
+
+table! {
     task (id) {
         id -> Int4,
         name -> Text,
@@ -8,3 +14,8 @@ table! {
         due -> Nullable<Timestamp>,
     }
 }
+
+allow_tables_to_appear_in_same_query!(
+    api_token,
+    task,
+);

@@ -2,7 +2,18 @@
 
 See [design-doc.md](design-doc.md) for more info.
 
+
+Development
+===========
+
+To run a local `rask_api` server that restarts whenever the code is changed:
+
+```
+ROCKET_PORT=8001 cargo watch -x 'run --bin rask_api'
+```
+
 Testing
 =======
 
 `RUST_TESTING=1 cargo test`
+

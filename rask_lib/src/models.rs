@@ -1,4 +1,5 @@
-use super::schema::task;
+use crate::schema::api_token;
+use crate::schema::task;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
@@ -37,4 +38,11 @@ pub struct NewTask {
     pub project: Option<String>,
     pub priority: Option<String>,
     pub due: Option<chrono::NaiveDateTime>,
+}
+
+#[derive(Queryable, Identifiable, Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
+#[table_name = "api_token"]
+#[primary_key(token)]
+pub struct ApiToken {
+    pub token: String,
 }
