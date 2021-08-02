@@ -2,12 +2,13 @@ use assert_cmd::Command;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use predicates::prelude::*;
-use rask_lib::models::NewTask;
 use rask_lib::testing::run_test;
+use rask_lib::{models::NewTask, schema::api_token};
 use regex::Regex;
 use std::{panic, str};
 
 const DB_URL: &str = "postgres://postgres:password@localhost:5001/rask";
+const EXAMPLE_TOKEN: &str = "ef7025f8-1baa-4a20-96b5-8eff947f417d";
 
 /// Returns a connection to the database.
 fn get_db_conn() -> PgConnection {
@@ -16,6 +17,18 @@ fn get_db_conn() -> PgConnection {
 
 fn get_cmd() -> Command {
     Command::cargo_bin("rask_cli").unwrap()
+}
+
+fn add_api_token_to_db() {
+    let conn = get_db_conn();
+    diesel::insert_into(api_token::table)
+        .values(api_token::token.eq(EXAMPLE_TOKEN))
+        .on_conflict_do_nothing()
+        .execute(&conn)
+        .unwrap();
+
+    // TODO - argh - how do we give the token to the command? set it as an env var?
+    // TODO oh right, i'll need to update the actual cli prod code first in the first place!
 }
 
 fn assert_list_output_contains(expected_output: &str) {
