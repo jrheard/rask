@@ -68,28 +68,27 @@ impl<'r> FromRequest<'r> for ApiToken {
             return Outcome::Failure((Status::BadRequest, ApiTokenError::NoHeader));
         }
 
-        if let Some(token) = parse_auth_header(auth_header.unwrap()) {
-            let token = token.to_string();
-            if let Outcome::Success(db) = req.guard::<DBConn>().await {
-                let token_row = db
-                    .run(move |conn| db_queries::token_exists(conn, &token))
-                    .await;
+        let parsed_header = parse_auth_header(auth_header.unwrap());
+        if parsed_header.is_none() {
+            return Outcome::Failure((Status::BadRequest, ApiTokenError::MalformedHeader));
+        }
 
-                match token_row {
-                    Ok(true) => Outcome::Success(ApiToken),
-                    Ok(false) => {
-                        Outcome::Failure((Status::Unauthorized, ApiTokenError::InvalidToken))
-                    }
-                    Err(_) => Outcome::Failure((
-                        Status::InternalServerError,
-                        ApiTokenError::DatabaseError,
-                    )),
+        let token = parsed_header.unwrap().to_string();
+
+        if let Outcome::Success(db) = req.guard::<DBConn>().await {
+            let token_row = db
+                .run(move |conn| db_queries::token_exists(conn, &token))
+                .await;
+
+            match token_row {
+                Ok(true) => Outcome::Success(ApiToken),
+                Ok(false) => Outcome::Failure((Status::Unauthorized, ApiTokenError::InvalidToken)),
+                Err(_) => {
+                    Outcome::Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
                 }
-            } else {
-                Outcome::Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
             }
         } else {
-            return Outcome::Failure((Status::BadRequest, ApiTokenError::MalformedHeader));
+            Outcome::Failure((Status::InternalServerError, ApiTokenError::DatabaseError))
         }
     }
 }
