@@ -36,10 +36,10 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
     }
 }
 
-struct ApiToken;
+pub struct ApiToken;
 
 #[derive(Debug)]
-enum ApiTokenError {
+pub enum ApiTokenError {
     NoHeader,
     MalformedHeader,
     InvalidToken,
@@ -49,7 +49,7 @@ enum ApiTokenError {
 fn parse_auth_header(header: &str) -> Option<&str> {
     let split_header = header.split(' ').collect::<Vec<_>>();
 
-    if split_header.len() != 2 || split_header[0] != "Bearer" {
+    if split_header.len() != 2 || split_header[0] != "Basic" {
         return None;
     }
 
@@ -65,7 +65,7 @@ impl<'r> FromRequest<'r> for ApiToken {
         let auth_header = req.headers().get_one("Authorization");
 
         if auth_header.is_none() {
-            return Outcome::Failure((Status::BadRequest, ApiTokenError::NoHeader));
+            return Outcome::Failure((Status::Unauthorized, ApiTokenError::NoHeader));
         }
 
         let parsed_header = parse_auth_header(auth_header.unwrap());
@@ -96,7 +96,11 @@ impl<'r> FromRequest<'r> for ApiToken {
 type Result<T, E = RaskApiError> = std::result::Result<T, E>;
 
 #[get("/task/<task_id>")]
-pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
+pub async fn get_task_by_id(
+    db: DBConn,
+    task_id: i32,
+    _token: ApiToken,
+) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
         .await
         .map(|row| row.map(Json))
@@ -104,14 +108,14 @@ pub async fn get_task_by_id(db: DBConn, task_id: i32) -> Result<Option<Json<Task
 }
 
 #[get("/tasks/all")]
-pub async fn get_tasks(db: DBConn) -> Result<Json<Vec<Task>>> {
+pub async fn get_tasks(db: DBConn, _token: ApiToken) -> Result<Json<Vec<Task>>> {
     let tasks = db.run(move |conn| db_queries::get_tasks(conn)).await?;
 
     Ok(Json(tasks))
 }
 
 #[get("/tasks/alive")]
-pub async fn get_alive_tasks(db: DBConn) -> Result<Json<Vec<Task>>> {
+pub async fn get_alive_tasks(db: DBConn, _token: ApiToken) -> Result<Json<Vec<Task>>> {
     let tasks = db
         .run(move |conn| db_queries::get_alive_tasks(conn))
         .await?;
@@ -120,7 +124,11 @@ pub async fn get_alive_tasks(db: DBConn) -> Result<Json<Vec<Task>>> {
 }
 
 #[post("/task", data = "<task_form>")]
-pub async fn create_task(db: DBConn, task_form: Form<TaskForm>) -> Result<Created<Json<Task>>> {
+pub async fn create_task(
+    db: DBConn,
+    task_form: Form<TaskForm>,
+    _token: ApiToken,
+) -> Result<Created<Json<Task>>> {
     let new_task = db
         .run(move |conn| db_queries::create_task(conn, WrappedNewTask::from(task_form).0))
         .await?;
@@ -129,7 +137,11 @@ pub async fn create_task(db: DBConn, task_form: Form<TaskForm>) -> Result<Create
 }
 
 #[post("/task/<task_id>/complete")]
-pub async fn complete_task(db: DBConn, task_id: i32) -> Result<Option<Json<Task>>> {
+pub async fn complete_task(
+    db: DBConn,
+    task_id: i32,
+    _token: ApiToken,
+) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::update_mode(conn, task_id, MODE_COMPLETED))
         .await
         .map(|row| row.map(Json))
@@ -141,6 +153,7 @@ pub async fn edit_task(
     db: DBConn,
     task_id: i32,
     task_form: Form<TaskForm>,
+    _token: ApiToken,
 ) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::update_task(conn, task_id, WrappedNewTask::from(task_form).0))
         .await
