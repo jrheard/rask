@@ -1,7 +1,7 @@
 Overall Goal
 ============
 My Taskwarrior RPi setup, with more bells and whistles and less pain (for the user, anyway).
-Written in Rust for learning, likely very overengineered also for learning.
+Written in Rust for learning, overengineered also for learning.
 
 Use Cases
 =========
@@ -18,7 +18,7 @@ Use Cases
 - [ ] Tasks can be uncompleted
 - [ ] Tasks can be deleted
 - [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
-- [ ] Nobody but me can edit/view my tasks
+- [X] Nobody but me can edit/view my tasks
 - [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
 - [ ] Tasks have an "urgency" value that's derived from their various attributes using a simple formula
 - [ ] Tasks can be marked as "recurring", eg every two days, two weeks, two months; these tasks recur at midnight on the morning of a particular day, regardless of the time of day when they were created
@@ -38,21 +38,19 @@ Development Setup
 =================
 - [X] Tests run in CI
 - [X] Test coverage is generated in CI
-- [ ] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
-- [ ] Manual deploy to production on my linode (blocked on setting up auth first)
+- [X] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
+- [ ] Manual deploy to production
 - [ ] CD to production
 
 Stretch Overengineering Exercises
 =================================
-- [ ] Kubernetes (maybe with Azure; google/aws cost $73/month for a k8s cluster)
-- [ ] Terraform
+- [ ] Kubernetes? (maybe with Azure; google/aws cost $73/month for a k8s cluster)
+- [ ] Terraform?
+- [ ] ECS instead?
+- [ ] Heroku instead?
+- [ ] Logging? (TODO: can/should authorization header values be kept out of logs?)
 - [ ] Monitoring?
 - [ ] Alerting?
-
-Less Crazy Overengineering Exercises
-====================================
-Getting a full kubernetes setup running seems potentially expensive. What about https://devcenter.heroku.com/articles/container-registry-and-runtime ?
-I also need to look into Linode, it has a Kubernetes offering too.
 
 High-Level Design
 =================
@@ -68,30 +66,26 @@ Slightly-more-zoomed-in design scratchpad
 
 Cargo workspace
 * 1 lib crate with shared business logic
-    TODO: does this business logic lib crate know how to interact with the DB?
 * 1 bin crate for web api
-    TODO: is the web api the only part of the system that talks directly to the db?
 * 1 bin crate for recurrence daemon
-    TODO how does the daemon talk to the db? through the api or directly?
-        through the api imo
+    talks to the web api for reads/writes
     TODO read https://www.badykov.com/rust/2020/06/28/you-dont-need-background-job-library/
         waitaminute, why does he even use tokio here? what's the point of bringing async/await into the mix in this situation? no reason imo!
 * 1 bin crate for CLI
     talks to the web api for reads/writes
 
-docker-compose setup
+docker containers
     * 1 docker image for http api crate
     * 1 docker image for recurrence daemon crate
     * 1 docker image for db
         * 1 volume for persistence
 
-authentication for CLI done via SSH key - i'll generate a keypair specifically for this app and distribute the private key to my machines
-requests to API need to be signed by private SSH key
+authentication for CLI done via API token
 
 configuration for CLI will be something to figure out - probably a .raskrc?
-it'll have to know which IP to point at for the web api backend
+it'll have to know which IP to point at for the web api backend, and it'll have to know about api token
 
-no clue how i'll do authentication for phone.
-    if i allow mobile devices to access the system via an html webapp, i could do oauth with a single allowed user?
+no clue how i'll do authentication for phone
+    if i allow mobile devices to access the system via an html webapp, how do i store the api token on the phone?
     if i only allow tasks to be entered via phone, i could just use email and have only my own email addresses whitelisted
         wouldn't be able to view / complete tasks via phone, but that'd be totally fine imo

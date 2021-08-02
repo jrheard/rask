@@ -1,0 +1,3 @@
+CREATE TABLE api_token (
+    token TEXT NOT NULL PRIMARY KEY
+)

@@ -13,6 +13,7 @@ mod db;
 mod db_queries;
 pub mod endpoints;
 mod form;
+mod token;
 
 /// Runs Diesel migrations as part of `rocket`'s initialization.
 async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {

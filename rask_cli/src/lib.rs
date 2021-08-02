@@ -3,6 +3,9 @@ use anyhow::{Context, Result};
 use args::ModifyOpts;
 use clap::Clap;
 use rask_lib::models::{NewTask, Task};
+use reqwest::blocking::{Client, RequestBuilder};
+use reqwest::header::AUTHORIZATION;
+use std::env;
 
 pub mod args;
 
@@ -21,18 +24,31 @@ fn make_url(endpoint: &str) -> String {
     format!("{}:{}/{}", API_ROOT, port, endpoint)
 }
 
-fn get_task(task_id: i32) -> Result<Task> {
-    Ok(
-        reqwest::blocking::get(make_url(&format!("task/{}", task_id)))
-            .context("Unable to read task info from API")?
-            .json::<Task>()?,
-    )
+trait Authorizable {
+    fn add_authorization_header(self, token: &str) -> Self;
 }
 
-fn complete_task(task_id: i32) -> Result<()> {
-    let client = reqwest::blocking::Client::new();
+impl Authorizable for RequestBuilder {
+    fn add_authorization_header(self, token: &str) -> Self {
+        self.header(AUTHORIZATION, format!("Bearer {}", token))
+    }
+}
+
+fn get_task(task_id: i32, token: &str) -> Result<Task> {
+    let client = Client::new();
+    Ok(client
+        .get(make_url(&format!("task/{}", task_id)))
+        .add_authorization_header(token)
+        .send()
+        .context("Unable to read task info from API")?
+        .json::<Task>()?)
+}
+
+fn complete_task(task_id: i32, token: &str) -> Result<()> {
+    let client = Client::new();
     let task = client
         .post(make_url(&format!("task/{}/complete", task_id)))
+        .add_authorization_header(token)
         .send()?
         .error_for_status()
         .context("Unable to mark task completed")?
@@ -42,10 +58,11 @@ fn complete_task(task_id: i32) -> Result<()> {
     Ok(())
 }
 
-fn create_task(opts: CreateOpts) -> Result<()> {
-    let client = reqwest::blocking::Client::new();
+fn create_task(opts: CreateOpts, token: &str) -> Result<()> {
+    let client = Client::new();
     let created_task = client
         .post(make_url("task"))
+        .add_authorization_header(token)
         .form(&NewTask::from(opts))
         .send()?
         .error_for_status()
@@ -56,8 +73,8 @@ fn create_task(opts: CreateOpts) -> Result<()> {
     Ok(())
 }
 
-fn task_info(task_id: i32) -> Result<()> {
-    let task = get_task(task_id)?;
+fn task_info(task_id: i32, token: &str) -> Result<()> {
+    let task = get_task(task_id, token)?;
 
     println!("Task {}:", task.id);
     println!("==============================");
@@ -81,8 +98,12 @@ fn task_info(task_id: i32) -> Result<()> {
     Ok(())
 }
 
-fn list_tasks() -> Result<()> {
-    let tasks = reqwest::blocking::get(make_url("tasks/alive"))
+fn list_tasks(token: &str) -> Result<()> {
+    let client = Client::new();
+    let tasks = client
+        .get(make_url("tasks/alive"))
+        .add_authorization_header(token)
+        .send()
         .context("Unable to read alive tasks from API")?
         .json::<Vec<Task>>()?;
 
@@ -95,8 +116,8 @@ fn list_tasks() -> Result<()> {
     Ok(())
 }
 
-fn modify_task(opts: ModifyOpts) -> Result<()> {
-    let task = get_task(opts.task_id)?;
+fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
+    let task = get_task(opts.task_id, token)?;
 
     // For each Optional value in NewTask:
     // Set it to None if the user passed in the literal string "none",
@@ -118,9 +139,10 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
         },
     };
 
-    let client = reqwest::blocking::Client::new();
+    let client = Client::new();
     let updated_task = client
         .post(make_url(&format!("task/{}/edit", task.id)))
+        .add_authorization_header(token)
         .form(&new_task_values)
         .send()?
         .error_for_status()
@@ -134,12 +156,13 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
 
 pub fn run() -> Result<()> {
     let opts = Opts::parse();
+    let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
 
     match opts.subcommand {
-        SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id),
-        SubCommand::Create(create_opts) => create_task(create_opts),
-        SubCommand::Info(InfoOpts { task_id }) => task_info(task_id),
-        SubCommand::List(_) => list_tasks(),
-        SubCommand::Modify(modify_opts) => modify_task(modify_opts),
+        SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id, &token),
+        SubCommand::Create(create_opts) => create_task(create_opts, &token),
+        SubCommand::Info(InfoOpts { task_id }) => task_info(task_id, &token),
+        SubCommand::List(_) => list_tasks(&token),
+        SubCommand::Modify(modify_opts) => modify_task(modify_opts, &token),
     }
 }
