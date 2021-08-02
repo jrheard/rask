@@ -16,6 +16,8 @@ pub enum ApiTokenError {
     DatabaseError,
 }
 
+/// Parses an HTTP Authorization header like "Bearer: AN_API_TOKEN".
+/// Returns `Some("AN_API_TOKEN")` if the header was well-formed, `None` otherwise.
 fn parse_auth_header(header: &str) -> Option<&str> {
     let split_header = header.split(' ').collect::<Vec<_>>();
 
@@ -26,6 +28,7 @@ fn parse_auth_header(header: &str) -> Option<&str> {
     Some(split_header[1])
 }
 
+/// Verifies that `req` has an Authorization HTTP header whose value is a known API token.
 async fn validate_request_api_token(req: &Request<'_>) -> Result<(), ApiTokenError> {
     let auth_header = req
         .headers()
