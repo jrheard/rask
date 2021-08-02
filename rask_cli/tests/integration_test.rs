@@ -148,7 +148,7 @@ fn test_completing_task() {
         .arg(id)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Success"));
+        .stdout(predicate::str::contains("Completed task"));
 
     assert_list_output_contains("Retrieved 0 tasks");
 }

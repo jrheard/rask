@@ -30,19 +30,16 @@ fn get_task(task_id: i32) -> Result<Task> {
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
-    println!("Marking task {} as completed...", task_id);
-
     let client = reqwest::blocking::Client::new();
-    let result = client
+    let task = client
         .post(make_url(&format!("task/{}/complete", task_id)))
         .send()?
         .error_for_status()
-        .context("Unable to mark task completed")
-        .map(|_| ());
+        .context("Unable to mark task completed")?
+        .json::<Task>()?;
 
-    println!("Success!");
-
-    result
+    println!("Completed task {}: '{}'", task.id, task.name);
+    Ok(())
 }
 
 fn create_task(opts: CreateOpts) -> Result<()> {
