@@ -57,7 +57,7 @@ High-Level Design
 * Users primarily interact with the system via a CLI similar to `task`
 * The CLI makes HTTP requests to a web API
 * The system's data is stored in a centralized postgres db
-* Recurring tasks are created by a simple daemon process
+* Recurring tasks are created by a simple daemon process, it also un-waits tasks
 
 -------
 
@@ -67,7 +67,7 @@ Slightly-more-zoomed-in design scratchpad
 Cargo workspace
 * 1 lib crate with shared business logic
 * 1 bin crate for web api
-* 1 bin crate for recurrence daemon
+* 1 bin crate for recurrence/unwait daemon
     talks to the web api for reads/writes
     TODO read https://www.badykov.com/rust/2020/06/28/you-dont-need-background-job-library/
         waitaminute, why does he even use tokio here? what's the point of bringing async/await into the mix in this situation? no reason imo!
@@ -76,7 +76,7 @@ Cargo workspace
 
 docker containers
     * 1 docker image for http api crate
-    * 1 docker image for recurrence daemon crate
+    * 1 docker image for recurrence/unwait daemon crate
     * 1 docker image for db
         * 1 volume for persistence
 

@@ -39,6 +39,7 @@ pub fn assemble_rocket() -> Rocket<Build> {
     load_environment_variables();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be defined");
+    println!("db url is {}", db_url);
     let db: Map<_, Value> = map! {
         "url" => db_url.into(),
         "pool_size" => 10.into()
