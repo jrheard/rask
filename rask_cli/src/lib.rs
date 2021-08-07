@@ -11,17 +11,18 @@ pub mod args;
 
 pub const DATE_FORMAT: &str = "%m/%d/%Y";
 
-const API_ROOT: &str = "http://localhost";
-
 /// Turns an `endpoint` like `task/1` into a full API URL.
 fn make_url(endpoint: &str) -> String {
-    let port = if std::env::var_os("RUST_TESTING").is_some() {
-        "8002"
-    } else {
-        "8001"
-    };
+    let root = env::var("RASK_API_ROOT").unwrap_or_else(|_| "localhost".to_string());
+    let port = env::var("RASK_API_PORT").unwrap_or_else(|_| {
+        if std::env::var_os("RUST_TESTING").is_some() {
+            "8002".to_string()
+        } else {
+            "8001".to_string()
+        }
+    });
 
-    format!("{}:{}/{}", API_ROOT, port, endpoint)
+    format!("http://{}:{}/{}", root, port, endpoint)
 }
 
 trait Authorizable {
