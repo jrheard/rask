@@ -17,7 +17,7 @@ Use Cases
 - [ ] Tasks can be edited a la `task edit` (done in api)
 - [ ] Tasks can be uncompleted
 - [ ] Tasks can be deleted
-- [ ] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
+- [X] Multiple machines can view/edit the same task list without needing to carefully merge/sync their state
 - [X] Nobody but me can edit/view my tasks
 - [ ] Tasks can be marked as "waiting", and are hidden from task list view until they're un-waited
 - [ ] Tasks have an "urgency" value that's derived from their various attributes using a simple formula
@@ -39,18 +39,16 @@ Development Setup
 - [X] Tests run in CI
 - [X] Test coverage is generated in CI
 - [X] When developing the CLI and API together, changes to the API are automatically "deployed" to wherever the dev CLI is pointing to
-- [ ] Manual deploy to production
-- [ ] CD to production
+- [X] Manual deploy to production
+- [X] CD to production
 
 Stretch Overengineering Exercises
 =================================
-- [ ] Kubernetes? (maybe with Azure; google/aws cost $73/month for a k8s cluster)
-- [ ] Terraform?
-- [ ] ECS instead?
-- [ ] Heroku instead?
-- [ ] Logging? (TODO: can/should authorization header values be kept out of logs?)
-- [ ] Monitoring?
-- [ ] Alerting?
+- [X] ECS
+- [ ] Some kind of infrastructure-as-code tool
+- [ ] Logging (TODO: can/should authorization header values be kept out of logs?)
+- [ ] Monitoring
+- [ ] Alerting
 
 High-Level Design
 =================
