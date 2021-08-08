@@ -27,18 +27,10 @@ async fn run_migrations(rocket: Rocket<Build>) -> Rocket<Build> {
     rocket
 }
 
-/// Loads environment variables from .env files.
-pub fn load_environment_variables() {
-    if env::var("RUST_TESTING").is_ok() {
-        dotenv::from_filename(".env.test").ok();
-    }
-    dotenv().ok();
-}
-
 pub fn assemble_rocket() -> Rocket<Build> {
-    load_environment_variables();
+    dotenv().ok();
 
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be defined");
+    let db_url = env::var("RASK_DATABASE_URL").expect("RASK_DATABASE_URL must be defined");
     let db: Map<_, Value> = map! {
         "url" => db_url.into(),
         "pool_size" => 10.into()
@@ -71,11 +63,17 @@ pub fn assemble_rocket() -> Rocket<Build> {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+
     use super::assemble_rocket;
     use rocket::{http::Status, local::blocking::Client};
 
+    const DATABASE_URL: &str = "postgres://postgres:password@localhost:5001/rask";
+
     #[test]
     fn test_500_response() {
+        env::set_var("RASK_DATABASE_URL", DATABASE_URL);
+
         let client = Client::tracked(assemble_rocket()).unwrap();
         let response = client.get("/500").dispatch();
 

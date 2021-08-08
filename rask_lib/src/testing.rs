@@ -19,6 +19,10 @@ where
     T: FnOnce() + panic::UnwindSafe,
 {
     env::set_var("RASK_API_ROOT", "http://localhost:8002");
+    env::set_var(
+        "RASK_DATABASE_URL",
+        "postgres://postgres:password@localhost:5001/rask",
+    );
 
     let result = panic::catch_unwind(|| test());
 

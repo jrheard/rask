@@ -20,8 +20,6 @@ jobs:
 
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
-        env:
-          RUST_TESTING: 1
         with:
           args: '-v -- --test-threads 1'
 

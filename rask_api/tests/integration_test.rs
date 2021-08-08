@@ -4,9 +4,10 @@ use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
 use rask_lib::testing::{insert_example_api_token, run_test};
 use rocket::http::{ContentType, Header, Status};
 use rocket::local::blocking::{Client, LocalRequest};
-use std::{env, panic};
+use std::panic;
 
 const EXAMPLE_TOKEN: &str = "9fc51cf8-461c-4092-a705-476c98e358cb";
+const DATABASE_URL: &str = "postgres://postgres:password@localhost:5001/rask";
 
 /// Returns a local blocking Rocket Client.
 fn get_client() -> Client {
@@ -15,9 +16,8 @@ fn get_client() -> Client {
 
 /// Returns a connection to the database.
 fn get_db_conn() -> PgConnection {
-    rask_api::load_environment_variables();
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be defined");
-    PgConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url))
+    PgConnection::establish(DATABASE_URL)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", DATABASE_URL))
 }
 
 trait Authorizable {
