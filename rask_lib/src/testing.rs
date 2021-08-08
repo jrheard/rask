@@ -1,6 +1,6 @@
 use crate::schema::{api_token, task};
 use diesel::prelude::*;
-use std::panic;
+use std::{env, panic};
 
 /// Deletes all rows in the `task` table.
 fn delete_all_tasks(conn: &PgConnection) {
@@ -18,6 +18,8 @@ pub fn run_test<T>(test: T, conn: PgConnection)
 where
     T: FnOnce() + panic::UnwindSafe,
 {
+    env::set_var("RASK_API_ROOT", "http://localhost:8002");
+
     let result = panic::catch_unwind(|| test());
 
     delete_all_tasks(&conn);
