@@ -1,4 +1,4 @@
-use crate::args::{CompleteOpts, CreateOpts, InfoOpts, Opts, SubCommand};
+use crate::args::{CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, SubCommand};
 use anyhow::{Context, Result};
 use args::ModifyOpts;
 use clap::Clap;
@@ -92,10 +92,16 @@ fn task_info(task_id: i32, token: &str) -> Result<()> {
     Ok(())
 }
 
-fn list_tasks(token: &str) -> Result<()> {
+fn list_tasks(include_all_tasks: bool, token: &str) -> Result<()> {
+    let endpoint = if include_all_tasks {
+        "tasks/all"
+    } else {
+        "tasks/alive"
+    };
+
     let client = Client::new();
     let tasks = client
-        .get(make_url("tasks/alive"))
+        .get(make_url(endpoint))
         .add_authorization_header(token)
         .send()
         .context("Unable to read alive tasks from API")?
@@ -149,6 +155,8 @@ fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
 }
 
 pub fn run() -> Result<()> {
+    dotenv::dotenv().ok();
+
     let opts = Opts::parse();
     let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
 
@@ -156,7 +164,7 @@ pub fn run() -> Result<()> {
         SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id, &token),
         SubCommand::Create(create_opts) => create_task(create_opts, &token),
         SubCommand::Info(InfoOpts { task_id }) => task_info(task_id, &token),
-        SubCommand::List(_) => list_tasks(&token),
+        SubCommand::List(ListOpts { all }) => list_tasks(all, &token),
         SubCommand::Modify(modify_opts) => modify_task(modify_opts, &token),
     }
 }

@@ -45,10 +45,15 @@ Development Setup
 Stretch Overengineering Exercises
 =================================
 - [X] ECS
-- [ ] Some kind of infrastructure-as-code tool
+- [ ] Some kind of infrastructure-as-code tool (cloudformation? terraform?)
 - [ ] Logging (TODO: can/should authorization header values be kept out of logs?)
 - [ ] Monitoring
 - [ ] Alerting
+
+Eventually
+==========
+- [ ] Consolidate AWS setup or move to docker-compose on my linode
+- [ ] Revisit tui-rs library (definitely a bad idea for this program but could be fun to play around with)
 
 High-Level Design
 =================
@@ -73,15 +78,14 @@ Cargo workspace
     talks to the web api for reads/writes
 
 docker containers
-    * 1 docker image for http api crate
-    * 1 docker image for recurrence/unwait daemon crate
-    * 1 docker image for db
-        * 1 volume for persistence
+* 1 docker image for http api crate
+* 1 docker image for recurrence/unwait daemon crate
+* 1 docker image for db (in dev/test)
+    * 1 volume for persistence (in dev)
 
 authentication for CLI done via API token
 
-configuration for CLI will be something to figure out - probably a .raskrc?
-it'll have to know which IP to point at for the web api backend, and it'll have to know about api token
+configuration for CLI will be something to figure out - probably a .raskrc? hasn't been necessary yet
 
 no clue how i'll do authentication for phone
     if i allow mobile devices to access the system via an html webapp, how do i store the api token on the phone?

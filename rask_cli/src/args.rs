@@ -58,7 +58,10 @@ pub struct InfoOpts {
 }
 
 #[derive(Clap)]
-pub struct ListOpts {}
+pub struct ListOpts {
+    #[clap(long)]
+    pub all: bool,
+}
 #[derive(Clap, Debug)]
 pub struct CreateOpts {
     pub name: String,
