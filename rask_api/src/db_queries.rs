@@ -4,7 +4,9 @@ use diesel::prelude::*;
 use diesel::select;
 use diesel::sql_types::Bool;
 use diesel::PgConnection;
-use rask_lib::models::{Mode, NewTask, Task, MODE_ACTIVE, MODE_DELETED, MODE_PENDING};
+use rask_lib::models::{
+    Mode, NewTask, Task, MODE_ACTIVE, MODE_COMPLETED, MODE_DELETED, MODE_PENDING,
+};
 use rask_lib::schema::api_token;
 use rask_lib::schema::task;
 
@@ -43,6 +45,20 @@ pub fn update_mode(conn: &PgConnection, task_id: i32, mode: Mode) -> QueryResult
         .set(task::mode.eq(mode.0))
         .get_result(conn)
         .optional()
+}
+
+pub fn uncomplete_task(conn: &PgConnection, task_id: i32) -> QueryResult<Option<Task>> {
+    let result = get_task_by_id(conn, task_id, false)?;
+
+    if let Some(task) = result {
+        if task.mode == MODE_COMPLETED.0 {
+            update_mode(conn, task_id, MODE_PENDING)
+        } else {
+            Ok(Some(task))
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 pub fn create_task(conn: &PgConnection, new_task: NewTask) -> QueryResult<Task> {
