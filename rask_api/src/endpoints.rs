@@ -2,7 +2,7 @@ use crate::db::DBConn;
 use crate::db_queries;
 use crate::form::{TaskForm, WrappedNewTask};
 use crate::token::ApiToken;
-use rask_lib::models::{Task, MODE_COMPLETED};
+use rask_lib::models::{Task, MODE_COMPLETED, MODE_DELETED};
 use rocket::form::Form;
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
@@ -43,7 +43,7 @@ pub async fn get_task_by_id(
     task_id: i32,
     _token: ApiToken,
 ) -> Result<Option<Json<Task>>> {
-    db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
+    db.run(move |conn| db_queries::get_task_by_id(conn, task_id, true))
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
@@ -88,6 +88,31 @@ pub async fn complete_task(
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
+}
+
+#[post("/task/<task_id>/uncomplete")]
+pub async fn uncomplete_task(
+    db: DBConn,
+    task_id: i32,
+    _token: ApiToken,
+) -> Result<Option<Json<Task>>> {
+    let result = db
+        .run(move |conn| db_queries::get_task_by_id(conn, task_id, false))
+        .await
+        .map_err(RaskApiError::DatabaseError)?;
+
+    if let Some(task) = result {
+        if task.mode == MODE_COMPLETED.0 {
+            db.run(move |conn| db_queries::update_mode(conn, task_id, MODE_COMPLETED))
+                .await
+                .map(|o| o.map(Json))
+                .map_err(RaskApiError::DatabaseError)
+        } else {
+            Ok(Some(Json(task)))
+        }
+    } else {
+        Ok(None)
+    }
 }
 
 #[post("/task/<task_id>/edit", data = "<task_form>")]
