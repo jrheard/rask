@@ -50,14 +50,9 @@ pub fn update_mode(conn: &PgConnection, task_id: i32, mode: Mode) -> QueryResult
 pub fn uncomplete_task(conn: &PgConnection, task_id: i32) -> QueryResult<Option<Task>> {
     let result = get_task_by_id(conn, task_id, false)?;
 
-    if let Some(task) = result {
-        if task.mode == MODE_COMPLETED.0 {
-            update_mode(conn, task_id, MODE_PENDING)
-        } else {
-            Ok(Some(task))
-        }
-    } else {
-        Ok(None)
+    match result {
+        Some(task) if task.mode == MODE_COMPLETED.0 => update_mode(conn, task_id, MODE_PENDING),
+        x => Ok(x),
     }
 }
 
