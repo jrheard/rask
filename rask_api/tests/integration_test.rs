@@ -81,7 +81,7 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
 }
 
 fn get_example_datetime() -> NaiveDateTime {
-    chrono::NaiveDate::from_ymd(2021, 7, 25).and_hms(23, 56, 4)
+    chrono::NaiveDate::from_ymd(2021, 7, 25)
 }
 
 fn assert_tasks_endpoint_contains(client: &Client, uri: &str, task_list_response: &[Task]) {

@@ -1,4 +1,4 @@
-use chrono::{format::ParseResult, NaiveDate, NaiveDateTime};
+use chrono::{format::ParseResult, NaiveDate};
 use clap::Clap;
 use rask_lib::models;
 
@@ -11,18 +11,19 @@ pub enum ParseDecision<T> {
 // Clap seems to treat an Ok(None) value as "this arg was unspecified", so we use
 // an eerily-Option-like ParseDecision enum to represent the situation where the user gave us
 // the string "none".
-fn parse_date_str_or_none_str(date_str: &str) -> ParseResult<ParseDecision<NaiveDateTime>> {
+fn parse_date_str_or_none_str(date_str: &str) -> ParseResult<ParseDecision<NaiveDate>> {
     if date_str == "none" {
         Ok(ParseDecision::Delete)
     } else {
-        Ok(ParseDecision::Set(
-            NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT)?.and_hms(0, 0, 0),
-        ))
+        Ok(ParseDecision::Set(NaiveDate::parse_from_str(
+            date_str,
+            crate::DATE_FORMAT,
+        )?))
     }
 }
 
-fn parse_date(date_str: &str) -> ParseResult<NaiveDateTime> {
-    Ok(NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT)?.and_hms(0, 0, 0))
+fn parse_date(date_str: &str) -> ParseResult<NaiveDate> {
+    NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT)
 }
 
 fn parse_project(project: &str) -> Result<String, String> {
@@ -75,7 +76,7 @@ pub struct CreateOpts {
 
     /// Format: MM/DD/YYYY, e.g. 05/01/2021
     #[clap(short, long, parse(try_from_str = parse_date))]
-    pub due: Option<NaiveDateTime>,
+    pub due: Option<NaiveDate>,
 }
 
 impl From<CreateOpts> for models::NewTask {
@@ -113,7 +114,7 @@ pub struct ModifyOpts {
 
     /// Format: MM/DD/YYYY, e.g. 05/01/2021. A value of `none` deletes the due date.
     #[clap(short, long, parse(try_from_str = parse_date_str_or_none_str))]
-    pub due: Option<ParseDecision<NaiveDateTime>>,
+    pub due: Option<ParseDecision<NaiveDate>>,
 }
 
 #[derive(Clap)]

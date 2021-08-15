@@ -28,8 +28,8 @@ pub struct Task {
     pub project: Option<String>,
     pub priority: Option<String>,
     pub mode: String,
-    pub due: Option<chrono::NaiveDateTime>,
     pub time_created: chrono::DateTime<Utc>,
+    pub due: Option<chrono::NaiveDate>,
 }
 
 #[derive(Insertable, Serialize, AsChangeset, Debug)]
@@ -39,7 +39,7 @@ pub struct NewTask {
     pub name: String,
     pub project: Option<String>,
     pub priority: Option<String>,
-    pub due: Option<chrono::NaiveDateTime>,
+    pub due: Option<chrono::NaiveDate>,
 }
 
 #[derive(Queryable, Identifiable, Deserialize, Serialize, PartialEq, Eq, Debug, Clone)]
