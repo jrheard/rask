@@ -33,22 +33,22 @@ enum Method {
     Post,
 }
 
-fn make_request<F: FnOnce(RequestBuilder) -> RequestBuilder>(
-    method: Method,
-    url: String,
-    request_builder_fn: F,
-) -> reqwest::Result<Response> {
+fn make_request(method: Method, url: String, form: Option<NewTask>) -> reqwest::Result<Response> {
     let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
 
     let client = Client::new();
 
-    let builder = match method {
+    let mut builder = match method {
         Method::Get => client.get(url),
         Method::Post => client.post(url),
     }
     .add_authorization_header(&token);
 
-    request_builder_fn(builder).send()?.error_for_status()
+    if let Some(form) = form {
+        builder = builder.form(&form);
+    }
+
+    builder.send()?.error_for_status()
 }
 
 fn print_task(task: &Task) {
@@ -68,20 +68,18 @@ fn print_task(task: &Task) {
 }
 
 fn get_task(task_id: i32) -> Result<Task> {
-    Ok(make_request(
-        Method::Get,
-        make_url(&format!("task/{}", task_id)),
-        |builder| builder,
+    Ok(
+        make_request(Method::Get, make_url(&format!("task/{}", task_id)), None)
+            .context("Unable to read task info from API")?
+            .json::<Task>()?,
     )
-    .context("Unable to read task info from API")?
-    .json::<Task>()?)
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
     let task = make_request(
         Method::Post,
         make_url(&format!("task/{}/complete", task_id)),
-        |builder| builder,
+        None,
     )
     .context("Unable to mark task completed")?
     .json::<Task>()?;
@@ -95,7 +93,7 @@ fn uncomplete_task(task_id: i32) -> Result<()> {
     let task = make_request(
         Method::Post,
         make_url(&format!("task/{}/uncomplete", task_id)),
-        |builder| builder,
+        None,
     )
     .context("Unable to mark task uncompleted")?
     .json::<Task>()?;
@@ -106,11 +104,9 @@ fn uncomplete_task(task_id: i32) -> Result<()> {
 }
 
 fn create_task(opts: CreateOpts) -> Result<()> {
-    let created_task = make_request(Method::Post, make_url("task"), |builder| {
-        builder.form(&NewTask::from(opts))
-    })
-    .context("Unable to create task")?
-    .json::<Task>()?;
+    let created_task = make_request(Method::Post, make_url("task"), Some(NewTask::from(opts)))
+        .context("Unable to create task")?
+        .json::<Task>()?;
 
     println!("Successfully created task.");
     print_task(&created_task);
@@ -130,7 +126,7 @@ fn list_tasks(include_all_tasks: bool) -> Result<()> {
         "tasks/alive"
     };
 
-    let tasks = make_request(Method::Get, make_url(endpoint), |builder| builder)
+    let tasks = make_request(Method::Get, make_url(endpoint), None)
         .context("Unable to read alive tasks from API")?
         .json::<Vec<Task>>()?;
 
@@ -169,7 +165,7 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
     let updated_task = make_request(
         Method::Post,
         make_url(&format!("task/{}/edit", task.id)),
-        |builder| builder.form(&new_task_values),
+        Some(new_task_values),
     )
     .context("Unable to modify task")?
     .json::<Task>()?;
