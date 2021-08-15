@@ -3,7 +3,7 @@ use anyhow::{Context, Result};
 use args::ModifyOpts;
 use clap::Clap;
 use rask_lib::models::{NewTask, Task};
-use reqwest::blocking::{Client, RequestBuilder};
+use reqwest::blocking::{Client, RequestBuilder, Response};
 use reqwest::header::AUTHORIZATION;
 use std::env;
 
@@ -28,6 +28,29 @@ impl Authorizable for RequestBuilder {
     }
 }
 
+enum Method {
+    Get,
+    Post,
+}
+
+fn make_request<F: FnOnce(RequestBuilder) -> RequestBuilder>(
+    method: Method,
+    url: String,
+    request_builder_fn: F,
+) -> reqwest::Result<Response> {
+    let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
+
+    let client = Client::new();
+
+    let builder = match method {
+        Method::Get => client.get(url),
+        Method::Post => client.post(url),
+    }
+    .add_authorization_header(&token);
+
+    request_builder_fn(builder).send()?.error_for_status()
+}
+
 fn print_task(task: &Task) {
     println!("==========");
     println!("Task {}:", task.id);
@@ -44,80 +67,70 @@ fn print_task(task: &Task) {
     );
 }
 
-fn get_task(task_id: i32, token: &str) -> Result<Task> {
-    let client = Client::new();
-    Ok(client
-        .get(make_url(&format!("task/{}", task_id)))
-        .add_authorization_header(token)
-        .send()
-        .context("Unable to read task info from API")?
-        .json::<Task>()?)
+fn get_task(task_id: i32) -> Result<Task> {
+    Ok(make_request(
+        Method::Get,
+        make_url(&format!("task/{}", task_id)),
+        |builder| builder,
+    )
+    .context("Unable to read task info from API")?
+    .json::<Task>()?)
 }
 
-fn complete_task(task_id: i32, token: &str) -> Result<()> {
-    let client = Client::new();
-    let task = client
-        .post(make_url(&format!("task/{}/complete", task_id)))
-        .add_authorization_header(token)
-        .send()?
-        .error_for_status()
-        .context("Unable to mark task completed")?
-        .json::<Task>()?;
+fn complete_task(task_id: i32) -> Result<()> {
+    let task = make_request(
+        Method::Post,
+        make_url(&format!("task/{}/complete", task_id)),
+        |builder| builder,
+    )
+    .context("Unable to mark task completed")?
+    .json::<Task>()?;
 
     println!("Completed task.");
     print_task(&task);
     Ok(())
 }
 
-fn uncomplete_task(task_id: i32, token: &str) -> Result<()> {
-    let client = Client::new();
-    let task = client
-        .post(make_url(&format!("task/{}/uncomplete", task_id)))
-        .add_authorization_header(token)
-        .send()?
-        .error_for_status()
-        .context("Unable to mark task uncompleted")?
-        .json::<Task>()?;
+fn uncomplete_task(task_id: i32) -> Result<()> {
+    let task = make_request(
+        Method::Post,
+        make_url(&format!("task/{}/uncomplete", task_id)),
+        |builder| builder,
+    )
+    .context("Unable to mark task uncompleted")?
+    .json::<Task>()?;
 
     println!("Uncompleted task.");
     print_task(&task);
     Ok(())
 }
 
-fn create_task(opts: CreateOpts, token: &str) -> Result<()> {
-    let client = Client::new();
-    let created_task = client
-        .post(make_url("task"))
-        .add_authorization_header(token)
-        .form(&NewTask::from(opts))
-        .send()?
-        .error_for_status()
-        .context("Unable to create task")?
-        .json::<Task>()?;
+fn create_task(opts: CreateOpts) -> Result<()> {
+    let created_task = make_request(Method::Post, make_url("task"), |builder| {
+        builder.form(&NewTask::from(opts))
+    })
+    .context("Unable to create task")?
+    .json::<Task>()?;
 
     println!("Successfully created task.");
     print_task(&created_task);
     Ok(())
 }
 
-fn task_info(task_id: i32, token: &str) -> Result<()> {
-    let task = get_task(task_id, token)?;
+fn task_info(task_id: i32) -> Result<()> {
+    let task = get_task(task_id)?;
     print_task(&task);
     Ok(())
 }
 
-fn list_tasks(include_all_tasks: bool, token: &str) -> Result<()> {
+fn list_tasks(include_all_tasks: bool) -> Result<()> {
     let endpoint = if include_all_tasks {
         "tasks/all"
     } else {
         "tasks/alive"
     };
 
-    let client = Client::new();
-    let tasks = client
-        .get(make_url(endpoint))
-        .add_authorization_header(token)
-        .send()
+    let tasks = make_request(Method::Get, make_url(endpoint), |builder| builder)
         .context("Unable to read alive tasks from API")?
         .json::<Vec<Task>>()?;
 
@@ -130,8 +143,8 @@ fn list_tasks(include_all_tasks: bool, token: &str) -> Result<()> {
     Ok(())
 }
 
-fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
-    let task = get_task(opts.task_id, token)?;
+fn modify_task(opts: ModifyOpts) -> Result<()> {
+    let task = get_task(opts.task_id)?;
 
     // For each Optional value in NewTask:
     // Set it to None if the user passed in the literal string "none",
@@ -153,15 +166,13 @@ fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
         },
     };
 
-    let client = Client::new();
-    let updated_task = client
-        .post(make_url(&format!("task/{}/edit", task.id)))
-        .add_authorization_header(token)
-        .form(&new_task_values)
-        .send()?
-        .error_for_status()
-        .context("Unable to modify task")?
-        .json::<Task>()?;
+    let updated_task = make_request(
+        Method::Post,
+        make_url(&format!("task/{}/edit", task.id)),
+        |builder| builder.form(&new_task_values),
+    )
+    .context("Unable to modify task")?
+    .json::<Task>()?;
 
     println!("Updated task.");
     print_task(&updated_task);
@@ -173,14 +184,13 @@ pub fn run() -> Result<()> {
     dotenv::dotenv().ok();
 
     let opts = Opts::parse();
-    let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
 
     match opts.subcommand {
-        SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id, &token),
-        SubCommand::Create(create_opts) => create_task(create_opts, &token),
-        SubCommand::Info(InfoOpts { task_id }) => task_info(task_id, &token),
-        SubCommand::List(ListOpts { all }) => list_tasks(all, &token),
-        SubCommand::Modify(modify_opts) => modify_task(modify_opts, &token),
-        SubCommand::Uncomplete(UncompleteOpts { task_id }) => uncomplete_task(task_id, &token),
+        SubCommand::Complete(CompleteOpts { task_id }) => complete_task(task_id),
+        SubCommand::Create(create_opts) => create_task(create_opts),
+        SubCommand::Info(InfoOpts { task_id }) => task_info(task_id),
+        SubCommand::List(ListOpts { all }) => list_tasks(all),
+        SubCommand::Modify(modify_opts) => modify_task(modify_opts),
+        SubCommand::Uncomplete(UncompleteOpts { task_id }) => uncomplete_task(task_id),
     }
 }
