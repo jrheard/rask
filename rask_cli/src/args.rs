@@ -46,6 +46,7 @@ pub enum SubCommand {
     Info(InfoOpts),
     List(ListOpts),
     Modify(ModifyOpts),
+    Uncomplete(UncompleteOpts),
 }
 #[derive(Clap)]
 pub struct CompleteOpts {
@@ -113,4 +114,9 @@ pub struct ModifyOpts {
     /// Format: MM/DD/YYYY, e.g. 05/01/2021. A value of `none` deletes the due date.
     #[clap(short, long, parse(try_from_str = parse_date_str_or_none_str))]
     pub due: Option<ParseDecision<NaiveDateTime>>,
+}
+
+#[derive(Clap)]
+pub struct UncompleteOpts {
+    pub task_id: i32,
 }

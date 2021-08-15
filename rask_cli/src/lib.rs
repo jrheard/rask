@@ -1,4 +1,4 @@
-use crate::args::{CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, SubCommand};
+use crate::args::{CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, SubCommand, UncompleteOpts};
 use anyhow::{Context, Result};
 use args::ModifyOpts;
 use clap::Clap;
@@ -28,6 +28,22 @@ impl Authorizable for RequestBuilder {
     }
 }
 
+fn print_task(task: &Task) {
+    println!("==========");
+    println!("Task {}:", task.id);
+    println!("==========");
+    println!("Name:\t\t{}", task.name);
+    println!("Mode:\t\t{}", task.mode);
+    println!("Project:\t{}", task.project.as_deref().unwrap_or("N/A"));
+    println!("Priority:\t{}", task.priority.as_deref().unwrap_or("N/A"));
+    println!(
+        "Due:\t\t{}",
+        task.due
+            .map(|due| due.format(DATE_FORMAT).to_string())
+            .unwrap_or_else(|| "N/A".to_string())
+    );
+}
+
 fn get_task(task_id: i32, token: &str) -> Result<Task> {
     let client = Client::new();
     Ok(client
@@ -48,7 +64,23 @@ fn complete_task(task_id: i32, token: &str) -> Result<()> {
         .context("Unable to mark task completed")?
         .json::<Task>()?;
 
-    println!("Completed task {}: '{}'", task.id, task.name);
+    println!("Completed task.");
+    print_task(&task);
+    Ok(())
+}
+
+fn uncomplete_task(task_id: i32, token: &str) -> Result<()> {
+    let client = Client::new();
+    let task = client
+        .post(make_url(&format!("task/{}/uncomplete", task_id)))
+        .add_authorization_header(token)
+        .send()?
+        .error_for_status()
+        .context("Unable to mark task uncompleted")?
+        .json::<Task>()?;
+
+    println!("Uncompleted task.");
+    print_task(&task);
     Ok(())
 }
 
@@ -63,32 +95,14 @@ fn create_task(opts: CreateOpts, token: &str) -> Result<()> {
         .context("Unable to create task")?
         .json::<Task>()?;
 
-    println!("Successfully created task with ID {}.", created_task.id);
+    println!("Successfully created task.");
+    print_task(&created_task);
     Ok(())
 }
 
 fn task_info(task_id: i32, token: &str) -> Result<()> {
     let task = get_task(task_id, token)?;
-
-    println!("Task {}:", task.id);
-    println!("==============================");
-
-    println!("Name:\t\t{}", task.name);
-    println!(
-        "Project:\t{}",
-        task.project.unwrap_or_else(|| "N/A".to_string())
-    );
-    println!(
-        "Priority:\t{}",
-        task.priority.unwrap_or_else(|| "N/A".to_string())
-    );
-    println!(
-        "Due:\t\t{}",
-        task.due
-            .map(|due| due.format(DATE_FORMAT).to_string())
-            .unwrap_or_else(|| "N/A".to_string())
-    );
-
+    print_task(&task);
     Ok(())
 }
 
@@ -149,7 +163,8 @@ fn modify_task(opts: ModifyOpts, token: &str) -> Result<()> {
         .context("Unable to modify task")?
         .json::<Task>()?;
 
-    println!("Updated task {}.", updated_task.id);
+    println!("Updated task.");
+    print_task(&updated_task);
 
     Ok(())
 }
@@ -166,5 +181,6 @@ pub fn run() -> Result<()> {
         SubCommand::Info(InfoOpts { task_id }) => task_info(task_id, &token),
         SubCommand::List(ListOpts { all }) => list_tasks(all, &token),
         SubCommand::Modify(modify_opts) => modify_task(modify_opts, &token),
+        SubCommand::Uncomplete(UncompleteOpts { task_id }) => uncomplete_task(task_id, &token),
     }
 }
