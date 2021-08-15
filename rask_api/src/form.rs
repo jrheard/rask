@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use rask_lib::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
 use rocket::form::{self, ValueField};
 use rocket::form::{Form, FromForm, FromFormField};
@@ -27,16 +27,16 @@ fn validate_priority<'v>(priority: &Option<String>) -> form::Result<'v, ()> {
         _ => Err(form::Error::validation("priority must be one of H,M,L or blank").into()),
     }
 }
-pub struct NaiveDateTimeFormField(NaiveDateTime);
+pub struct NaiveDateFormField(NaiveDate);
 
 #[rocket::async_trait]
-impl<'r> FromFormField<'r> for NaiveDateTimeFormField {
+impl<'r> FromFormField<'r> for NaiveDateFormField {
     fn from_value(form_value: ValueField<'r>) -> form::Result<'r, Self> {
-        let parsed = NaiveDateTime::parse_from_str(form_value.value, "%Y-%m-%dT%H:%M:%S");
+        let parsed = NaiveDate::parse_from_str(form_value.value, "%Y-%m-%d");
 
         match parsed {
-            Ok(naive_date_time) => Ok(NaiveDateTimeFormField(naive_date_time)),
-            Err(_) => Err(form::Error::validation("invalid datetime").into()),
+            Ok(naive_date_time) => Ok(NaiveDateFormField(naive_date_time)),
+            Err(_) => Err(form::Error::validation("invalid date").into()),
         }
     }
 }
@@ -48,7 +48,7 @@ pub struct TaskForm {
     project: Option<String>,
     #[field(validate=validate_priority())]
     priority: Option<String>,
-    due: Option<NaiveDateTimeFormField>,
+    due: Option<NaiveDateFormField>,
 }
 
 // A wrapper type to work around the orphan rule.

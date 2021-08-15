@@ -146,7 +146,7 @@ fn test_create_all_fields() {
                 name: "clean litterbox".to_string(),
                 project: Some("frank".to_string()),
                 priority: Some("H".to_string()),
-                due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
+                due: Some(NaiveDate::from_ymd(2021, 7, 31)),
             });
 
             assert_list_output_contains("Retrieved 1 tasks");
@@ -201,7 +201,7 @@ fn test_modify_task() {
                 name: "clean litterbox".to_string(),
                 project: Some("frank".to_string()),
                 priority: Some("H".to_string()),
-                due: Some(NaiveDate::from_ymd(2021, 7, 31).and_hms(0, 0, 0)),
+                due: Some(NaiveDate::from_ymd(2021, 7, 31)),
             });
 
             let mut cmd = get_cmd();
