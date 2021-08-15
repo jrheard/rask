@@ -1,6 +1,8 @@
 use crate::schema::api_token;
+use crate::schema::recurrence_template;
 use crate::schema::task;
 use chrono::Utc;
+use diesel::data_types::PgInterval;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +22,10 @@ pub const PRIORITY_HIGH: Priority = Priority("H");
 pub const PRIORITY_MEDIUM: Priority = Priority("M");
 pub const PRIORITY_LOW: Priority = Priority("L");
 
-#[derive(Queryable, Deserialize, Serialize, Identifiable, PartialEq, Eq, Debug, Clone)]
+#[derive(
+    Queryable, Deserialize, Serialize, Associations, Identifiable, PartialEq, Eq, Debug, Clone,
+)]
+#[belongs_to(RecurrenceTemplate)]
 #[table_name = "task"]
 pub struct Task {
     pub id: i32,
@@ -30,6 +35,7 @@ pub struct Task {
     pub mode: String,
     pub time_created: chrono::DateTime<Utc>,
     pub due: Option<chrono::NaiveDate>,
+    pub recurrence_template_id: Option<i32>,
 }
 
 #[derive(Insertable, Serialize, AsChangeset, Debug)]
@@ -47,4 +53,16 @@ pub struct NewTask {
 #[primary_key(token)]
 pub struct ApiToken {
     pub token: String,
+}
+
+#[derive(Queryable, Identifiable, PartialEq, Eq, Debug, Clone)]
+#[table_name = "recurrence_template"]
+pub struct RecurrenceTemplate {
+    pub id: i32,
+    pub time_created: chrono::DateTime<Utc>,
+    pub name: String,
+    pub project: Option<String>,
+    pub priority: Option<String>,
+    pub due: chrono::NaiveDate,
+    pub recurrence_period: PgInterval,
 }
