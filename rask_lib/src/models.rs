@@ -1,5 +1,6 @@
 use crate::schema::api_token;
 use crate::schema::task;
+use chrono::Utc;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
@@ -28,6 +29,7 @@ pub struct Task {
     pub priority: Option<String>,
     pub mode: String,
     pub due: Option<chrono::NaiveDateTime>,
+    pub time_created: chrono::DateTime<Utc>,
 }
 
 #[derive(Insertable, Serialize, AsChangeset, Debug)]

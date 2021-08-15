@@ -12,6 +12,7 @@ table! {
         priority -> Nullable<Text>,
         mode -> Text,
         due -> Nullable<Timestamp>,
+        time_created -> Timestamptz,
     }
 }
 

@@ -72,7 +72,8 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
             mode: MODE_COMPLETED.0.to_string(),
             project: task_to_complete.project.clone(),
             priority: task_to_complete.priority.clone(),
-            due: task_to_complete.due
+            due: task_to_complete.due,
+            time_created: task_to_complete.time_created
         }
     );
 
@@ -360,7 +361,8 @@ fn test_task_due_field() {
                     project: Some("house".to_string()),
                     mode: MODE_PENDING.0.to_string(),
                     priority: None,
-                    due: Some(get_example_datetime())
+                    due: Some(get_example_datetime()),
+                    time_created: new_task.time_created
                 }
             );
 
@@ -386,7 +388,8 @@ fn test_task_due_field() {
                     project: Some("house".to_string()),
                     mode: MODE_PENDING.0.to_string(),
                     priority: None,
-                    due: None
+                    due: None,
+                    time_created: new_task.time_created
                 }
             );
         },
@@ -437,6 +440,7 @@ fn test_editing_task() {
                     project: Some("frank".to_string()),
                     priority: Some("H".to_string()),
                     due: Some(get_example_datetime()),
+                    time_created: new_task.time_created
                 }
             );
         },

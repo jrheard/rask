@@ -57,6 +57,7 @@ fn print_task(task: &Task) {
     println!("==========");
     println!("Name:\t\t{}", task.name);
     println!("Mode:\t\t{}", task.mode);
+    println!("Created:\t{}", task.time_created);
     println!("Project:\t{}", task.project.as_deref().unwrap_or("N/A"));
     println!("Priority:\t{}", task.priority.as_deref().unwrap_or("N/A"));
     println!(
