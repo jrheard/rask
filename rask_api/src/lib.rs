@@ -46,6 +46,7 @@ pub fn assemble_rocket() -> Rocket<Build> {
                     endpoints::get_task_by_id,
                     endpoints::create_task,
                     endpoints::complete_task,
+                    endpoints::uncomplete_task,
                     endpoints::edit_task,
                     endpoints::healthcheck,
                 ],

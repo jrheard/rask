@@ -43,7 +43,7 @@ pub async fn get_task_by_id(
     task_id: i32,
     _token: ApiToken,
 ) -> Result<Option<Json<Task>>> {
-    db.run(move |conn| db_queries::get_task_by_id(conn, task_id))
+    db.run(move |conn| db_queries::get_task_by_id(conn, task_id, true))
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
@@ -85,6 +85,18 @@ pub async fn complete_task(
     _token: ApiToken,
 ) -> Result<Option<Json<Task>>> {
     db.run(move |conn| db_queries::update_mode(conn, task_id, MODE_COMPLETED))
+        .await
+        .map(|row| row.map(Json))
+        .map_err(RaskApiError::DatabaseError)
+}
+
+#[post("/task/<task_id>/uncomplete")]
+pub async fn uncomplete_task(
+    db: DBConn,
+    task_id: i32,
+    _token: ApiToken,
+) -> Result<Option<Json<Task>>> {
+    db.run(move |conn| db_queries::uncomplete_task(conn, task_id))
         .await
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
