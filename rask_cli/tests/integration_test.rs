@@ -62,10 +62,28 @@ fn create_task(input: NewTask) -> String {
     let assert = cmd.assert().success();
     let output = assert.get_output();
 
-    let re = Regex::new(r"Successfully created task with ID ([0-9]+).\n").unwrap();
+    let re = Regex::new(r"Task ([0-9]+):\n").unwrap();
     re.captures(str::from_utf8(&output.stdout).unwrap())
         .unwrap()[1]
         .to_string()
+}
+
+fn complete_task(id: &str) {
+    let mut cmd = get_cmd();
+    cmd.arg("complete")
+        .arg(id)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Completed task"));
+}
+
+fn uncomplete_task(id: &str) {
+    let mut cmd = get_cmd();
+    cmd.arg("uncomplete")
+        .arg(id)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Uncompleted task"));
 }
 
 #[test]
@@ -234,6 +252,40 @@ fn test_api_token_handling() {
                 let mut cmd = get_cmd();
                 cmd.arg("list").assert().failure();
             }
+        },
+        get_db_conn(),
+    );
+}
+
+#[test]
+fn test_uncompleting_task() {
+    run_test(
+        || {
+            set_up_authorization();
+
+            let id = create_task(NewTask {
+                name: "hello there".to_string(),
+                project: None,
+                priority: None,
+                due: None,
+            });
+
+            assert_list_output_contains("Retrieved 1 tasks");
+            assert_list_output_contains("hello there");
+            assert_info_output_contains(&id, "pending");
+
+            // Uncompleting a pending task leaves it as-is.
+            uncomplete_task(&id);
+            assert_list_output_contains("hello there");
+            assert_info_output_contains(&id, "pending");
+
+            complete_task(&id);
+            assert_info_output_contains(&id, "completed");
+            assert_list_output_contains("Retrieved 0 tasks");
+
+            uncomplete_task(&id);
+            assert_list_output_contains("hello there");
+            assert_info_output_contains(&id, "pending");
         },
         get_db_conn(),
     );
