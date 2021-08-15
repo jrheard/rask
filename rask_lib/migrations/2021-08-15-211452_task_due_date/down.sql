@@ -1,0 +1,2 @@
+ALTER TABLE task DROP COLUMN due;
+ALTER TABLE task ADD COLUMN due timestamp;
