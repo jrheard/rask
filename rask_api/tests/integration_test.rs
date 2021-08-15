@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use rask_lib::models::{NewTask, Task, MODE_COMPLETED, MODE_PENDING};
 use rask_lib::testing::{insert_example_api_token, run_test};
@@ -80,8 +80,8 @@ fn mark_task_completed(client: &Client, task_to_complete: &Task) -> Task {
     completed_task
 }
 
-fn get_example_datetime() -> NaiveDateTime {
-    chrono::NaiveDate::from_ymd(2021, 7, 25).and_hms(23, 56, 4)
+fn get_example_datetime() -> NaiveDate {
+    chrono::NaiveDate::from_ymd(2021, 7, 25)
 }
 
 fn assert_tasks_endpoint_contains(client: &Client, uri: &str, task_list_response: &[Task]) {
@@ -343,10 +343,7 @@ fn test_task_due_field() {
                 .post("/task")
                 .header(ContentType::Form)
                 .add_authorization_header()
-                .body(
-                    // 2021-07-25T23:56:04
-                    "name=clean+dishes&project=house&due=2021-07-25T23%3A56%3A04",
-                )
+                .body("name=clean+dishes&project=house&due=2021-07-25")
                 .dispatch();
 
             // The new task should have been created successfully.
