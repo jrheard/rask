@@ -125,7 +125,7 @@ pub async fn create_recurrence(
     recurrence_form: Form<RecurrenceForm>,
     _token: ApiToken,
 ) -> Result<Created<Json<RecurrenceTemplate>>> {
-    let new_task = db
+    let new_template = db
         .run(move |conn| {
             db_queries::create_recurrence(
                 conn,
@@ -134,7 +134,7 @@ pub async fn create_recurrence(
         })
         .await?;
 
-    Ok(Created::new("/task").body(Json(new_task)))
+    Ok(Created::new("/task").body(Json(new_template)))
 }
 
 // Misc
