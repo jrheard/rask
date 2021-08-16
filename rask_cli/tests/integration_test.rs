@@ -2,7 +2,7 @@ use assert_cmd::Command;
 use chrono::NaiveDate;
 use diesel::prelude::*;
 use predicates::prelude::*;
-use rask_lib::models::NewTask;
+use rask_lib::models::{NewRecurrenceTemplate, NewTask};
 use rask_lib::testing::{insert_example_api_token, run_test};
 use regex::Regex;
 use std::{env, panic, str};
@@ -84,6 +84,32 @@ fn uncomplete_task(id: &str) {
         .assert()
         .success()
         .stdout(predicate::str::contains("Uncompleted task"));
+}
+
+fn create_recurrence(input: NewRecurrenceTemplate) -> String {
+    let mut cmd = get_cmd();
+    let mut cmd = cmd
+        .arg("recur")
+        .arg("create")
+        .arg(input.name)
+        .arg(input.days_between_recurrences.to_string())
+        .arg("--due")
+        .arg(input.due.format(rask_cli::DATE_FORMAT).to_string());
+
+    if let Some(project) = input.project {
+        cmd = cmd.arg("--project").arg(project);
+    }
+    if let Some(priority) = input.priority {
+        cmd = cmd.arg("--priority").arg(priority);
+    }
+
+    let assert = cmd.assert().success();
+    let output = assert.get_output();
+
+    let re = Regex::new(r"Recurrence ([0-9]+):\n").unwrap();
+    re.captures(str::from_utf8(&output.stdout).unwrap())
+        .unwrap()[1]
+        .to_string()
 }
 
 #[test]
@@ -289,4 +315,24 @@ fn test_uncompleting_task() {
         },
         get_db_conn(),
     );
+}
+
+#[test]
+fn test_create_recurrence_template() {
+    run_test(
+        || {
+            set_up_authorization();
+
+            let _id = create_recurrence(NewRecurrenceTemplate {
+                name: "hello there".to_string(),
+                project: None,
+                priority: None,
+                due: NaiveDate::from_ymd(2021, 7, 31),
+                days_between_recurrences: 7,
+            });
+
+            // TODO look up recurrence and assert that it looks good
+        },
+        get_db_conn(),
+    )
 }

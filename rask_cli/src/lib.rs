@@ -189,7 +189,7 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
 
 fn print_recurrence(recurrence: &RecurrenceTemplate) {
     println!("==========");
-    println!("Task {}:", recurrence.id);
+    println!("Recurrence {}:", recurrence.id);
     println!("==========");
     println!("Name:\t\t{}", recurrence.name);
     println!("Created:\t{}", recurrence.time_created);
