@@ -146,10 +146,17 @@ pub struct Recur {
 
 #[derive(Clap)]
 pub enum RecurSubCommand {
-    Create(CreateRecurrenceOpts),
+    Create(RecurrenceCreateOpts),
+    Info(RecurrenceInfoOpts),
 }
+
 #[derive(Clap)]
-pub struct CreateRecurrenceOpts {
+pub struct RecurrenceInfoOpts {
+    pub recurrence_id: i32,
+}
+
+#[derive(Clap)]
+pub struct RecurrenceCreateOpts {
     pub name: String,
 
     /// Format: MM/DD/YYYY, e.g. 05/01/2021
@@ -165,15 +172,15 @@ pub struct CreateRecurrenceOpts {
     pub priority: Option<String>,
 }
 
-impl From<CreateRecurrenceOpts> for models::NewRecurrenceTemplate {
+impl From<RecurrenceCreateOpts> for models::NewRecurrenceTemplate {
     fn from(
-        CreateRecurrenceOpts {
+        RecurrenceCreateOpts {
             name,
             project,
             priority,
             due,
             days_between_recurrences,
-        }: CreateRecurrenceOpts,
+        }: RecurrenceCreateOpts,
     ) -> Self {
         models::NewRecurrenceTemplate {
             name,

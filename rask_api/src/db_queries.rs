@@ -91,3 +91,13 @@ pub fn create_recurrence(
         .values(new_recurrence)
         .get_result(conn)
 }
+
+pub fn get_recurrence_by_id(
+    conn: &PgConnection,
+    recurrence_id: i32,
+) -> QueryResult<Option<RecurrenceTemplate>> {
+    recurrence_template::table
+        .find(recurrence_id)
+        .first(conn)
+        .optional()
+}

@@ -2,7 +2,7 @@ use crate::args::{
     CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, RecurSubCommand, SubCommand, UncompleteOpts,
 };
 use anyhow::{Context, Result};
-use args::{CreateRecurrenceOpts, ModifyOpts};
+use args::{ModifyOpts, RecurrenceCreateOpts, RecurrenceInfoOpts};
 use clap::Clap;
 use rask_lib::models::{NewRecurrenceTemplate, NewTask, RecurrenceTemplate, Task};
 use reqwest::blocking::{Client, RequestBuilder, Response};
@@ -205,7 +205,23 @@ fn print_recurrence(recurrence: &RecurrenceTemplate) {
     println!("Days between:\t{}", recurrence.days_between_recurrences);
 }
 
-fn create_recurrence(opts: CreateRecurrenceOpts) -> Result<()> {
+fn get_recurrence(recurrence_id: i32) -> Result<RecurrenceTemplate> {
+    Ok(make_request::<RecurrenceTemplate>(
+        Method::Get,
+        make_url(&format!("recurrence/{}", recurrence_id)),
+        None,
+    )
+    .context("Unable to read recurrence info from API")?
+    .json::<RecurrenceTemplate>()?)
+}
+
+fn recurrence_info(recurrence_id: i32) -> Result<()> {
+    let recurrence = get_recurrence(recurrence_id)?;
+    print_recurrence(&recurrence);
+    Ok(())
+}
+
+fn create_recurrence(opts: RecurrenceCreateOpts) -> Result<()> {
     let recurrence = make_request(
         Method::Post,
         make_url("recurrence"),
@@ -233,6 +249,9 @@ pub fn run() -> Result<()> {
         SubCommand::Uncomplete(UncompleteOpts { task_id }) => uncomplete_task(task_id),
         SubCommand::Recur(recur) => match recur.subcommand {
             RecurSubCommand::Create(create_opts) => create_recurrence(create_opts),
+            RecurSubCommand::Info(RecurrenceInfoOpts { recurrence_id }) => {
+                recurrence_info(recurrence_id)
+            }
         },
     }
 }

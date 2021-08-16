@@ -112,6 +112,16 @@ fn create_recurrence(input: NewRecurrenceTemplate) -> String {
         .to_string()
 }
 
+fn assert_recur_info_output_contains(recurrence_id: &str, expected_output: &str) {
+    let mut cmd = get_cmd();
+    cmd.arg("recur")
+        .arg("info")
+        .arg(recurrence_id)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected_output));
+}
+
 #[test]
 fn test_no_args() {
     run_test(
@@ -323,7 +333,7 @@ fn test_create_recurrence_template() {
         || {
             set_up_authorization();
 
-            let _id = create_recurrence(NewRecurrenceTemplate {
+            let id = create_recurrence(NewRecurrenceTemplate {
                 name: "hello there".to_string(),
                 project: None,
                 priority: None,
@@ -331,7 +341,8 @@ fn test_create_recurrence_template() {
                 days_between_recurrences: 7,
             });
 
-            // TODO look up recurrence and assert that it looks good
+            assert_recur_info_output_contains(&id, &format!("Recurrence {}", id));
+            assert_recur_info_output_contains(&id, "hello there");
         },
         get_db_conn(),
     )

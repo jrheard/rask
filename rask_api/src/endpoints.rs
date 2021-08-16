@@ -119,6 +119,18 @@ pub async fn edit_task(
 
 // Recurrences
 
+#[get("/recurrence/<recurrence_id>")]
+pub async fn get_recurrence_by_id(
+    db: DBConn,
+    recurrence_id: i32,
+    _token: ApiToken,
+) -> Result<Option<Json<RecurrenceTemplate>>> {
+    db.run(move |conn| db_queries::get_recurrence_by_id(conn, recurrence_id))
+        .await
+        .map(|row| row.map(Json))
+        .map_err(RaskApiError::DatabaseError)
+}
+
 #[post("/recurrence", data = "<recurrence_form>")]
 pub async fn create_recurrence(
     db: DBConn,
