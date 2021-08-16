@@ -1223,6 +1223,8 @@ dependencies = [
  "rask_lib",
  "regex",
  "reqwest",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

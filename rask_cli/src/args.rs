@@ -1,6 +1,7 @@
-use chrono::{format::ParseResult, NaiveDate};
+use chrono::{Datelike, NaiveDate, ParseError};
 use clap::Clap;
 use rask_lib::models;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub enum ParseDecision<T> {
@@ -8,22 +9,36 @@ pub enum ParseDecision<T> {
     Delete,
 }
 
+#[derive(Debug, Error)]
+pub enum DateParseError {
+    #[error("Error parsing date")]
+    ChronoError(#[from] ParseError),
+
+    #[error("Date's year was too low: {year:?} (specify MM/DD/YYYY, not MM/DD/YY)")]
+    YearTooLowError { year: i32 },
+}
+
 // Clap seems to treat an Ok(None) value as "this arg was unspecified", so we use
 // an eerily-Option-like ParseDecision enum to represent the situation where the user gave us
 // the string "none".
-fn parse_date_str_or_none_str(date_str: &str) -> ParseResult<ParseDecision<NaiveDate>> {
+fn parse_date_str_or_none_str(date_str: &str) -> Result<ParseDecision<NaiveDate>, DateParseError> {
     if date_str == "none" {
         Ok(ParseDecision::Delete)
     } else {
-        Ok(ParseDecision::Set(NaiveDate::parse_from_str(
-            date_str,
-            crate::DATE_FORMAT,
-        )?))
+        parse_date(date_str).map(ParseDecision::Set)
     }
 }
 
-fn parse_date(date_str: &str) -> ParseResult<NaiveDate> {
+fn parse_date(date_str: &str) -> Result<NaiveDate, DateParseError> {
     NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT)
+        .map_err(DateParseError::ChronoError)
+        .and_then(|date| {
+            if date.year() >= 2000 {
+                Ok(date)
+            } else {
+                Err(DateParseError::YearTooLowError { year: date.year() })
+            }
+        })
 }
 
 fn parse_project(project: &str) -> Result<String, String> {
@@ -48,6 +63,7 @@ pub enum SubCommand {
     List(ListOpts),
     Modify(ModifyOpts),
     Uncomplete(UncompleteOpts),
+    Recur(Recur),
 }
 #[derive(Clap)]
 pub struct CompleteOpts {
@@ -80,14 +96,14 @@ pub struct CreateOpts {
 }
 
 impl From<CreateOpts> for models::NewTask {
-    fn from(opts: CreateOpts) -> Self {
-        let CreateOpts {
+    fn from(
+        CreateOpts {
             name,
             project,
             priority,
             due,
-        } = opts;
-
+        }: CreateOpts,
+    ) -> Self {
         models::NewTask {
             name,
             project,
@@ -120,4 +136,51 @@ pub struct ModifyOpts {
 #[derive(Clap)]
 pub struct UncompleteOpts {
     pub task_id: i32,
+}
+
+#[derive(Clap)]
+pub struct Recur {
+    #[clap(subcommand)]
+    pub subcommand: RecurSubCommand,
+}
+
+#[derive(Clap)]
+pub enum RecurSubCommand {
+    Create(CreateRecurrenceOpts),
+}
+#[derive(Clap)]
+pub struct CreateRecurrenceOpts {
+    pub name: String,
+
+    /// Format: MM/DD/YYYY, e.g. 05/01/2021
+    #[clap(short, long, parse(try_from_str = parse_date))]
+    pub due: NaiveDate,
+
+    pub days_between_recurrences: i32,
+
+    #[clap(long, alias = "proj", parse(try_from_str = parse_project))]
+    pub project: Option<String>,
+
+    #[clap(long, alias = "prio", possible_values(&["H", "M", "L"]))]
+    pub priority: Option<String>,
+}
+
+impl From<CreateRecurrenceOpts> for models::NewRecurrenceTemplate {
+    fn from(
+        CreateRecurrenceOpts {
+            name,
+            project,
+            priority,
+            due,
+            days_between_recurrences,
+        }: CreateRecurrenceOpts,
+    ) -> Self {
+        models::NewRecurrenceTemplate {
+            name,
+            project,
+            priority,
+            due,
+            days_between_recurrences,
+        }
+    }
 }
