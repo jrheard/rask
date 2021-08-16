@@ -148,6 +148,7 @@ pub struct Recur {
 pub enum RecurSubCommand {
     Create(RecurrenceCreateOpts),
     Info(RecurrenceInfoOpts),
+    List,
 }
 
 #[derive(Clap)]

@@ -149,6 +149,18 @@ pub async fn create_recurrence(
     Ok(Created::new(format!("/recurrence/{}", new_template.id)).body(Json(new_template)))
 }
 
+#[get("/recurrences/all")]
+pub async fn get_recurrences(
+    db: DBConn,
+    _token: ApiToken,
+) -> Result<Json<Vec<RecurrenceTemplate>>> {
+    let recurrences = db
+        .run(move |conn| db_queries::get_recurrences(conn))
+        .await?;
+
+    Ok(Json(recurrences))
+}
+
 // Misc
 
 #[get("/500")]

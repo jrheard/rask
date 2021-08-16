@@ -51,6 +51,7 @@ pub fn assemble_rocket() -> Rocket<Build> {
                     endpoints::healthcheck,
                     endpoints::create_recurrence,
                     endpoints::get_recurrence_by_id,
+                    endpoints::get_recurrences,
                 ],
             )
             .attach(DBConn::fairing())

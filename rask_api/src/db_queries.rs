@@ -101,3 +101,9 @@ pub fn get_recurrence_by_id(
         .first(conn)
         .optional()
 }
+
+pub fn get_recurrences(conn: &PgConnection) -> QueryResult<Vec<RecurrenceTemplate>> {
+    recurrence_template::table
+        .order(recurrence_template::id)
+        .load(conn)
+}

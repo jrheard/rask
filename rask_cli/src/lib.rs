@@ -235,6 +235,20 @@ fn create_recurrence(opts: RecurrenceCreateOpts) -> Result<()> {
     Ok(())
 }
 
+fn list_recurrences() -> Result<()> {
+    let recurrences = make_request::<NewTask>(Method::Get, make_url("recurrences/all"), None)
+        .context("Unable to read recurrence templates from API")?
+        .json::<Vec<RecurrenceTemplate>>()?;
+
+    println!("Retrieved {} recurrences", recurrences.len());
+    println!("======================");
+    for recurrence in recurrences {
+        println!("{}\t{}", recurrence.id, recurrence.name);
+    }
+
+    Ok(())
+}
+
 pub fn run() -> Result<()> {
     dotenv::dotenv().ok();
 
@@ -252,6 +266,7 @@ pub fn run() -> Result<()> {
             RecurSubCommand::Info(RecurrenceInfoOpts { recurrence_id }) => {
                 recurrence_info(recurrence_id)
             }
+            RecurSubCommand::List => list_recurrences(),
         },
     }
 }

@@ -122,6 +122,15 @@ fn assert_recur_info_output_contains(recurrence_id: &str, expected_output: &str)
         .stdout(predicate::str::contains(expected_output));
 }
 
+fn assert_recur_list_output_contains(expected_output: &str) {
+    let mut cmd = get_cmd();
+    cmd.arg("recur")
+        .arg("list")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected_output));
+}
+
 #[test]
 fn test_no_args() {
     run_test(
@@ -343,6 +352,8 @@ fn test_create_recurrence_template() {
 
             assert_recur_info_output_contains(&id, &format!("Recurrence {}", id));
             assert_recur_info_output_contains(&id, "hello there");
+            assert_recur_list_output_contains(&id);
+            assert_recur_list_output_contains("hello there");
         },
         get_db_conn(),
     )
