@@ -77,7 +77,7 @@ pub async fn create_task(
         .run(move |conn| db_queries::create_task(conn, WrappedNewTask::from(task_form).0))
         .await?;
 
-    Ok(Created::new("/task").body(Json(new_task)))
+    Ok(Created::new(format!("/task/{}", new_task.id)).body(Json(new_task)))
 }
 
 #[post("/task/<task_id>/complete")]
@@ -134,7 +134,7 @@ pub async fn create_recurrence(
         })
         .await?;
 
-    Ok(Created::new("/task").body(Json(new_template)))
+    Ok(Created::new(format!("/recurrence/{}", new_template.id)).body(Json(new_template)))
 }
 
 // Misc
