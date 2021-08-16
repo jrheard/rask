@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/jrheard/rask/branch/main/graph/badge.svg?token=BAZT2L4F24)](https://codecov.io/gh/jrheard/rask) (rask_cli integration tests aren't picked up by tarpaulin, [known issue](https://github.com/xd009642/tarpaulin/issues/616).)
+[![codecov](https://codecov.io/gh/jrheard/rask/branch/main/graph/badge.svg?token=BAZT2L4F24)](https://codecov.io/gh/jrheard/rask) (rask_cli integration test coverage isn't picked up by tarpaulin, [known issue](https://github.com/xd009642/tarpaulin/issues/616).)
 
 See [design-doc.md](design-doc.md) for more info.
 
@@ -15,5 +15,7 @@ ROCKET_PORT=8001 cargo watch -x 'run --bin rask_api'
 Testing
 =======
 
-`cargo test -- --test-threads=1`
-
+```
+docker-compose -f docker-compose-test.yaml up -d --build
+cargo test -- --test-threads=1
+```
