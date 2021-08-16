@@ -48,6 +48,7 @@ pub enum SubCommand {
     List(ListOpts),
     Modify(ModifyOpts),
     Uncomplete(UncompleteOpts),
+    Recur(Recur),
 }
 #[derive(Clap)]
 pub struct CompleteOpts {
@@ -80,14 +81,14 @@ pub struct CreateOpts {
 }
 
 impl From<CreateOpts> for models::NewTask {
-    fn from(opts: CreateOpts) -> Self {
-        let CreateOpts {
+    fn from(
+        CreateOpts {
             name,
             project,
             priority,
             due,
-        } = opts;
-
+        }: CreateOpts,
+    ) -> Self {
         models::NewTask {
             name,
             project,
@@ -120,4 +121,51 @@ pub struct ModifyOpts {
 #[derive(Clap)]
 pub struct UncompleteOpts {
     pub task_id: i32,
+}
+
+#[derive(Clap)]
+pub struct Recur {
+    #[clap(subcommand)]
+    pub subcommand: RecurSubCommand,
+}
+
+#[derive(Clap)]
+pub enum RecurSubCommand {
+    Create(CreateRecurrenceOpts),
+}
+#[derive(Clap)]
+pub struct CreateRecurrenceOpts {
+    pub name: String,
+
+    /// Format: MM/DD/YYYY, e.g. 05/01/2021
+    #[clap(short, long, parse(try_from_str = parse_date))]
+    pub due: NaiveDate,
+
+    pub days_between_recurrences: i32,
+
+    #[clap(long, alias = "proj", parse(try_from_str = parse_project))]
+    pub project: Option<String>,
+
+    #[clap(long, alias = "prio", possible_values(&["H", "M", "L"]))]
+    pub priority: Option<String>,
+}
+
+impl From<CreateRecurrenceOpts> for models::NewRecurrenceTemplate {
+    fn from(
+        CreateRecurrenceOpts {
+            name,
+            project,
+            priority,
+            due,
+            days_between_recurrences,
+        }: CreateRecurrenceOpts,
+    ) -> Self {
+        models::NewRecurrenceTemplate {
+            name,
+            project,
+            priority,
+            due,
+            days_between_recurrences,
+        }
+    }
 }

@@ -1,8 +1,10 @@
-use crate::args::{CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, SubCommand, UncompleteOpts};
+use crate::args::{
+    CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, RecurSubCommand, SubCommand, UncompleteOpts,
+};
 use anyhow::{Context, Result};
-use args::ModifyOpts;
+use args::{CreateRecurrenceOpts, ModifyOpts};
 use clap::Clap;
-use rask_lib::models::{NewTask, Task};
+use rask_lib::models::{NewRecurrenceTemplate, NewTask, RecurrenceTemplate, Task};
 use reqwest::blocking::{Client, RequestBuilder, Response};
 use reqwest::header::AUTHORIZATION;
 use std::env;
@@ -33,7 +35,10 @@ enum Method {
     Post,
 }
 
-fn make_request(method: Method, url: String, form: Option<NewTask>) -> reqwest::Result<Response> {
+fn make_request<T>(method: Method, url: String, form: Option<T>) -> reqwest::Result<Response>
+where
+    T: serde::Serialize,
+{
     let token = env::var("RASK_API_TOKEN").expect("No value found for RASK_API_TOKEN");
 
     let client = Client::new();
@@ -50,6 +55,8 @@ fn make_request(method: Method, url: String, form: Option<NewTask>) -> reqwest::
 
     builder.send()?.error_for_status()
 }
+
+// Tasks
 
 fn print_task(task: &Task) {
     println!("==========");
@@ -70,14 +77,14 @@ fn print_task(task: &Task) {
 
 fn get_task(task_id: i32) -> Result<Task> {
     Ok(
-        make_request(Method::Get, make_url(&format!("task/{}", task_id)), None)
+        make_request::<NewTask>(Method::Get, make_url(&format!("task/{}", task_id)), None)
             .context("Unable to read task info from API")?
             .json::<Task>()?,
     )
 }
 
 fn complete_task(task_id: i32) -> Result<()> {
-    let task = make_request(
+    let task = make_request::<NewTask>(
         Method::Post,
         make_url(&format!("task/{}/complete", task_id)),
         None,
@@ -91,7 +98,7 @@ fn complete_task(task_id: i32) -> Result<()> {
 }
 
 fn uncomplete_task(task_id: i32) -> Result<()> {
-    let task = make_request(
+    let task = make_request::<NewTask>(
         Method::Post,
         make_url(&format!("task/{}/uncomplete", task_id)),
         None,
@@ -105,9 +112,10 @@ fn uncomplete_task(task_id: i32) -> Result<()> {
 }
 
 fn create_task(opts: CreateOpts) -> Result<()> {
-    let created_task = make_request(Method::Post, make_url("task"), Some(NewTask::from(opts)))
-        .context("Unable to create task")?
-        .json::<Task>()?;
+    let created_task =
+        make_request::<NewTask>(Method::Post, make_url("task"), Some(NewTask::from(opts)))
+            .context("Unable to create task")?
+            .json::<Task>()?;
 
     println!("Successfully created task.");
     print_task(&created_task);
@@ -127,7 +135,7 @@ fn list_tasks(include_all_tasks: bool) -> Result<()> {
         "tasks/alive"
     };
 
-    let tasks = make_request(Method::Get, make_url(endpoint), None)
+    let tasks = make_request::<NewTask>(Method::Get, make_url(endpoint), None)
         .context("Unable to read alive tasks from API")?
         .json::<Vec<Task>>()?;
 
@@ -177,6 +185,40 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
     Ok(())
 }
 
+// Recurrences
+
+fn print_recurrence(recurrence: &RecurrenceTemplate) {
+    println!("==========");
+    println!("Task {}:", recurrence.id);
+    println!("==========");
+    println!("Name:\t\t{}", recurrence.name);
+    println!("Created:\t{}", recurrence.time_created);
+    println!(
+        "Project:\t{}",
+        recurrence.project.as_deref().unwrap_or("N/A")
+    );
+    println!(
+        "Priority:\t{}",
+        recurrence.priority.as_deref().unwrap_or("N/A")
+    );
+    println!("Due:\t\t{}", recurrence.due.format(DATE_FORMAT));
+    println!("Days between:\t{}", recurrence.days_between_recurrences);
+}
+
+fn create_recurrence(opts: CreateRecurrenceOpts) -> Result<()> {
+    let recurrence = make_request(
+        Method::Post,
+        make_url("recurrence"),
+        Some(NewRecurrenceTemplate::from(opts)),
+    )
+    .context("Unable to create recurrence")?
+    .json::<RecurrenceTemplate>()?;
+
+    println!("Successfully created recurrence.");
+    print_recurrence(&recurrence);
+    Ok(())
+}
+
 pub fn run() -> Result<()> {
     dotenv::dotenv().ok();
 
@@ -189,5 +231,8 @@ pub fn run() -> Result<()> {
         SubCommand::List(ListOpts { all }) => list_tasks(all),
         SubCommand::Modify(modify_opts) => modify_task(modify_opts),
         SubCommand::Uncomplete(UncompleteOpts { task_id }) => uncomplete_task(task_id),
+        SubCommand::Recur(recur) => match recur.subcommand {
+            RecurSubCommand::Create(create_opts) => create_recurrence(create_opts),
+        },
     }
 }
