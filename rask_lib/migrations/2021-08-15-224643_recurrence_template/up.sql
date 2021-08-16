@@ -5,7 +5,7 @@ CREATE TABLE recurrence_template (
     project TEXT,
     priority TEXT,
     due DATE NOT NULL,
-    recurrence_period INTERVAL NOT NULL
+    days_between_recurrences integer NOT NULL
 );
 
 ALTER TABLE task

@@ -2,7 +2,6 @@ use crate::schema::api_token;
 use crate::schema::recurrence_template;
 use crate::schema::task;
 use chrono::Utc;
-use diesel::data_types::PgInterval;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
 
@@ -55,7 +54,7 @@ pub struct ApiToken {
     pub token: String,
 }
 
-#[derive(Queryable, Identifiable, PartialEq, Eq, Debug, Clone)]
+#[derive(Queryable, Identifiable, PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 #[table_name = "recurrence_template"]
 pub struct RecurrenceTemplate {
     pub id: i32,
@@ -64,5 +63,15 @@ pub struct RecurrenceTemplate {
     pub project: Option<String>,
     pub priority: Option<String>,
     pub due: chrono::NaiveDate,
-    pub recurrence_period: PgInterval,
+    pub days_between_recurrences: i32,
+}
+
+#[derive(Insertable, AsChangeset, Debug, Serialize, Deserialize)]
+#[table_name = "recurrence_template"]
+pub struct NewRecurrenceTemplate {
+    pub name: String,
+    pub project: Option<String>,
+    pub priority: Option<String>,
+    pub due: chrono::NaiveDate,
+    pub days_between_recurrences: i32,
 }

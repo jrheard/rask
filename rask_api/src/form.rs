@@ -1,5 +1,7 @@
 use chrono::NaiveDate;
-use rask_lib::models::{NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM};
+use rask_lib::models::{
+    NewRecurrenceTemplate, NewTask, PRIORITY_HIGH, PRIORITY_LOW, PRIORITY_MEDIUM,
+};
 use rocket::form::{self, ValueField};
 use rocket::form::{Form, FromForm, FromFormField};
 
@@ -51,7 +53,18 @@ pub struct TaskForm {
     due: Option<NaiveDateFormField>,
 }
 
-// A wrapper type to work around the orphan rule.
+#[derive(FromForm)]
+pub struct RecurrenceForm {
+    name: String,
+    #[field(validate=validate_project())]
+    project: Option<String>,
+    #[field(validate=validate_priority())]
+    priority: Option<String>,
+    due: NaiveDateFormField,
+    days_between_recurrences: i32,
+}
+
+// Wrapper types to work around the orphan rule.
 pub struct WrappedNewTask(pub NewTask);
 
 impl From<Form<TaskForm>> for WrappedNewTask {
@@ -62,6 +75,21 @@ impl From<Form<TaskForm>> for WrappedNewTask {
             project: form.project,
             priority: form.priority,
             due: form.due.map(|due| due.0),
+        })
+    }
+}
+
+pub struct WrappedNewRecurrenceTemplate(pub NewRecurrenceTemplate);
+
+impl From<Form<RecurrenceForm>> for WrappedNewRecurrenceTemplate {
+    fn from(form: Form<RecurrenceForm>) -> Self {
+        let form = form.into_inner();
+        WrappedNewRecurrenceTemplate(NewRecurrenceTemplate {
+            name: form.name,
+            project: form.project,
+            priority: form.priority,
+            due: form.due.0,
+            days_between_recurrences: form.days_between_recurrences,
         })
     }
 }

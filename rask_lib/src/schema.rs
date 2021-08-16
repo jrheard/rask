@@ -12,7 +12,7 @@ table! {
         project -> Nullable<Text>,
         priority -> Nullable<Text>,
         due -> Date,
-        recurrence_period -> Interval,
+        days_between_recurrences -> Int4,
     }
 }
 

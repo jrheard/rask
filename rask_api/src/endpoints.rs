@@ -1,8 +1,8 @@
 use crate::db::DBConn;
 use crate::db_queries;
-use crate::form::{TaskForm, WrappedNewTask};
+use crate::form::{RecurrenceForm, TaskForm, WrappedNewRecurrenceTemplate, WrappedNewTask};
 use crate::token::ApiToken;
-use rask_lib::models::{Task, MODE_COMPLETED};
+use rask_lib::models::{RecurrenceTemplate, Task, MODE_COMPLETED};
 use rocket::form::Form;
 use rocket::http::{ContentType, Status};
 use rocket::response::status::Created;
@@ -36,6 +36,8 @@ impl<'r> Responder<'r, 'static> for RaskApiError {
 }
 
 type Result<T, E = RaskApiError> = std::result::Result<T, E>;
+
+// Tasks
 
 #[get("/task/<task_id>")]
 pub async fn get_task_by_id(
@@ -114,6 +116,28 @@ pub async fn edit_task(
         .map(|row| row.map(Json))
         .map_err(RaskApiError::DatabaseError)
 }
+
+// Recurrences
+
+#[post("/recurrence", data = "<recurrence_form>")]
+pub async fn create_recurrence(
+    db: DBConn,
+    recurrence_form: Form<RecurrenceForm>,
+    _token: ApiToken,
+) -> Result<Created<Json<RecurrenceTemplate>>> {
+    let new_task = db
+        .run(move |conn| {
+            db_queries::create_recurrence(
+                conn,
+                WrappedNewRecurrenceTemplate::from(recurrence_form).0,
+            )
+        })
+        .await?;
+
+    Ok(Created::new("/task").body(Json(new_task)))
+}
+
+// Misc
 
 #[get("/500")]
 pub async fn return_500() -> RaskApiError {

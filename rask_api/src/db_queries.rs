@@ -5,12 +5,16 @@ use diesel::select;
 use diesel::sql_types::Bool;
 use diesel::PgConnection;
 use rask_lib::models::{
-    Mode, NewTask, Task, MODE_ACTIVE, MODE_COMPLETED, MODE_DELETED, MODE_PENDING,
+    Mode, NewRecurrenceTemplate, NewTask, RecurrenceTemplate, Task, MODE_ACTIVE, MODE_COMPLETED,
+    MODE_DELETED, MODE_PENDING,
 };
 use rask_lib::schema::api_token;
+use rask_lib::schema::recurrence_template;
 use rask_lib::schema::task;
 
 type SqlExpr<'a, Table, SqlType> = Box<dyn BoxableExpression<Table, Pg, SqlType = SqlType> + 'a>;
+
+// Tasks
 
 pub fn alive_tasks<'a>() -> SqlExpr<'a, task::table, Bool> {
     Box::new(task::mode.eq(any(vec![MODE_PENDING.0, MODE_ACTIVE.0])))
@@ -71,6 +75,19 @@ pub fn update_task(
         .optional()
 }
 
+// Tokens
+
 pub fn token_exists(conn: &PgConnection, token: &str) -> QueryResult<bool> {
     select(exists(api_token::table.find(token))).get_result(conn)
+}
+
+// Recurrence templates
+
+pub fn create_recurrence(
+    conn: &PgConnection,
+    new_recurrence: NewRecurrenceTemplate,
+) -> QueryResult<RecurrenceTemplate> {
+    diesel::insert_into(recurrence_template::table)
+        .values(new_recurrence)
+        .get_result(conn)
 }
