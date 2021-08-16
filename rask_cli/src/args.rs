@@ -1,11 +1,20 @@
-use chrono::{format::ParseResult, NaiveDate};
+use chrono::{format::ParseResult, Datelike, NaiveDate, ParseError};
 use clap::Clap;
 use rask_lib::models;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub enum ParseDecision<T> {
     Set(T),
     Delete,
+}
+
+#[derive(Debug, Error)]
+pub enum DateParseError {
+    #[error("Error parsing date")]
+    ChronoError(#[from] ParseError),
+    #[error("Date's year was too low: {year:?} (specify MM/DD/YYYY, not MM/DD/YY)")]
+    YearTooLowError { year: i32 },
 }
 
 // Clap seems to treat an Ok(None) value as "this arg was unspecified", so we use
@@ -22,8 +31,16 @@ fn parse_date_str_or_none_str(date_str: &str) -> ParseResult<ParseDecision<Naive
     }
 }
 
-fn parse_date(date_str: &str) -> ParseResult<NaiveDate> {
+fn parse_date(date_str: &str) -> Result<NaiveDate, DateParseError> {
     NaiveDate::parse_from_str(date_str, crate::DATE_FORMAT)
+        .map_err(DateParseError::ChronoError)
+        .and_then(|date| {
+            if date.year() >= 2000 {
+                Ok(date)
+            } else {
+                Err(DateParseError::YearTooLowError { year: date.year() })
+            }
+        })
 }
 
 fn parse_project(project: &str) -> Result<String, String> {
