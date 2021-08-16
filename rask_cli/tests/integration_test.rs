@@ -94,7 +94,7 @@ fn test_no_args() {
 
             let mut cmd = get_cmd();
             cmd.assert()
-                .failure()
+                .success()
                 .stderr(predicate::str::contains("USAGE"));
         },
         get_db_conn(),
