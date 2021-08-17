@@ -398,7 +398,7 @@ fn test_task_due_field() {
 }
 
 #[test]
-/// The /task/<task_id>/edit endpoint should let users edit a task.
+/// The /task/<task_id>/modify endpoint should let users modify a task.
 fn test_editing_task() {
     run_test(
         || {
@@ -414,7 +414,7 @@ fn test_editing_task() {
             );
 
             let response = client
-                .post(format!("/task/{}/edit", new_task.id))
+                .post(format!("/task/{}/modify", new_task.id))
                 .header(ContentType::Form)
                 .add_authorization_header()
                 .body(

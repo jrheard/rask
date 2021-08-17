@@ -149,11 +149,36 @@ pub enum RecurSubCommand {
     Create(RecurrenceCreateOpts),
     Info(RecurrenceInfoOpts),
     List,
+    Modify(RecurrenceModifyOpts),
 }
 
 #[derive(Clap)]
 pub struct RecurrenceInfoOpts {
     pub recurrence_id: i32,
+}
+
+#[derive(Clap, Debug)]
+pub struct RecurrenceModifyOpts {
+    pub recurrence_id: i32,
+
+    /// The task's new name, if you want to change the name.
+    #[clap(long)]
+    pub name: Option<String>,
+
+    /// A one-word project name. A value of `none` deletes the project.
+    #[clap(long, alias = "proj", parse(try_from_str = parse_project))]
+    pub project: Option<String>,
+
+    /// A value of `none` deletes the priority.
+    #[clap(long, alias = "prio", possible_values(&["H", "M", "L", "none"]))]
+    pub priority: Option<String>,
+
+    /// Format: MM/DD/YYYY, e.g. 05/01/2021.
+    #[clap(short, long, parse(try_from_str = parse_date))]
+    pub due: Option<NaiveDate>,
+
+    #[clap(long)]
+    pub days_between_recurrences: Option<i32>,
 }
 
 #[derive(Clap)]

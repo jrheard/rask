@@ -68,6 +68,7 @@ pub struct RecurrenceTemplate {
 
 #[derive(Insertable, AsChangeset, Debug, Serialize, Deserialize)]
 #[table_name = "recurrence_template"]
+#[changeset_options(treat_none_as_null = "true")]
 pub struct NewRecurrenceTemplate {
     pub name: String,
     pub project: Option<String>,

@@ -358,3 +358,47 @@ fn test_create_recurrence_template() {
         get_db_conn(),
     )
 }
+
+#[test]
+fn test_modify_recurrence() {
+    run_test(
+        || {
+            set_up_authorization();
+
+            let id = create_recurrence(NewRecurrenceTemplate {
+                name: "clean litterbox".to_string(),
+                project: Some("frank".to_string()),
+                priority: Some("H".to_string()),
+                due: NaiveDate::from_ymd(2021, 7, 31),
+                days_between_recurrences: 10,
+            });
+
+            let mut cmd = get_cmd();
+            // Change the name and project, leave the priority as-is, and delete the due date.
+            cmd.args(&[
+                "recur",
+                "modify",
+                &id,
+                "--name",
+                "dust shelves",
+                "--project",
+                "house",
+                "--due",
+                "5/5/2055",
+                "--days-between-recurrences",
+                "7",
+            ])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Updated recurrence"));
+
+            assert_recur_info_output_contains(&id, &format!("Recurrence {}", id));
+            assert_recur_info_output_contains(&id, "dust shelves");
+            assert_recur_info_output_contains(&id, "Project:\thouse");
+            assert_recur_info_output_contains(&id, "Priority:\tH");
+            assert_recur_info_output_contains(&id, "Due:\t\t05/05/2055");
+            assert_recur_info_output_contains(&id, "Days between:\t7");
+        },
+        get_db_conn(),
+    );
+}

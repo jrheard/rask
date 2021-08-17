@@ -2,7 +2,7 @@ use crate::args::{
     CompleteOpts, CreateOpts, InfoOpts, ListOpts, Opts, RecurSubCommand, SubCommand, UncompleteOpts,
 };
 use anyhow::{Context, Result};
-use args::{ModifyOpts, RecurrenceCreateOpts, RecurrenceInfoOpts};
+use args::{ModifyOpts, RecurrenceCreateOpts, RecurrenceInfoOpts, RecurrenceModifyOpts};
 use clap::Clap;
 use rask_lib::models::{NewRecurrenceTemplate, NewTask, RecurrenceTemplate, Task};
 use reqwest::blocking::{Client, RequestBuilder, Response};
@@ -54,6 +54,17 @@ where
     }
 
     builder.send()?.error_for_status()
+}
+
+/// None if `provided_value` is `Some("none")`, else `provided_value.or(fallback)`
+fn provided_value_or_delete_or_fallback(
+    provided_value: Option<String>,
+    fallback: Option<String>,
+) -> Option<String> {
+    match provided_value.as_deref() {
+        Some("none") => None,
+        _ => provided_value.or(fallback),
+    }
 }
 
 // Tasks
@@ -151,19 +162,10 @@ fn list_tasks(include_all_tasks: bool) -> Result<()> {
 fn modify_task(opts: ModifyOpts) -> Result<()> {
     let task = get_task(opts.task_id)?;
 
-    // For each Optional value in NewTask:
-    // Set it to None if the user passed in the literal string "none",
-    // otherwise fall back to `task`'s value for that field.
     let new_task_values = NewTask {
         name: opts.name.unwrap_or(task.name),
-        project: match opts.project.as_deref() {
-            Some("none") => None,
-            _ => opts.project.or(task.project),
-        },
-        priority: match opts.priority.as_deref() {
-            Some("none") => None,
-            _ => opts.priority.or(task.priority),
-        },
+        project: provided_value_or_delete_or_fallback(opts.project, task.project),
+        priority: provided_value_or_delete_or_fallback(opts.priority, task.priority),
         due: match opts.due {
             None => task.due,
             Some(args::ParseDecision::Set(due)) => Some(due),
@@ -173,7 +175,7 @@ fn modify_task(opts: ModifyOpts) -> Result<()> {
 
     let updated_task = make_request(
         Method::Post,
-        make_url(&format!("task/{}/edit", task.id)),
+        make_url(&format!("task/{}/modify", task.id)),
         Some(new_task_values),
     )
     .context("Unable to modify task")?
@@ -249,6 +251,33 @@ fn list_recurrences() -> Result<()> {
     Ok(())
 }
 
+fn modify_recurrence(opts: RecurrenceModifyOpts) -> Result<()> {
+    let recurrence = get_recurrence(opts.recurrence_id)?;
+
+    let new_recurrence_values = NewRecurrenceTemplate {
+        name: opts.name.unwrap_or(recurrence.name),
+        project: provided_value_or_delete_or_fallback(opts.project, recurrence.project),
+        priority: provided_value_or_delete_or_fallback(opts.priority, recurrence.priority),
+        due: opts.due.unwrap_or(recurrence.due),
+        days_between_recurrences: opts
+            .days_between_recurrences
+            .unwrap_or(recurrence.days_between_recurrences),
+    };
+
+    let updated_recurrence = make_request(
+        Method::Post,
+        make_url(&format!("recurrence/{}/modify", recurrence.id)),
+        Some(new_recurrence_values),
+    )
+    .context("Unable to modify recurrence")?
+    .json::<RecurrenceTemplate>()?;
+
+    println!("Updated recurrence.");
+    print_recurrence(&updated_recurrence);
+
+    Ok(())
+}
+
 pub fn run() -> Result<()> {
     dotenv::dotenv().ok();
 
@@ -267,6 +296,7 @@ pub fn run() -> Result<()> {
                 recurrence_info(recurrence_id)
             }
             RecurSubCommand::List => list_recurrences(),
+            RecurSubCommand::Modify(modify_opts) => modify_recurrence(modify_opts),
         },
     }
 }

@@ -107,3 +107,14 @@ pub fn get_recurrences(conn: &PgConnection) -> QueryResult<Vec<RecurrenceTemplat
         .order(recurrence_template::id)
         .load(conn)
 }
+
+pub fn update_recurrence(
+    conn: &PgConnection,
+    recurrence_id: i32,
+    updated_fields: NewRecurrenceTemplate,
+) -> QueryResult<Option<RecurrenceTemplate>> {
+    diesel::update(recurrence_template::table.find(recurrence_id))
+        .set(updated_fields)
+        .get_result(conn)
+        .optional()
+}

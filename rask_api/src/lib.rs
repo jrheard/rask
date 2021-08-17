@@ -47,11 +47,12 @@ pub fn assemble_rocket() -> Rocket<Build> {
                     endpoints::create_task,
                     endpoints::complete_task,
                     endpoints::uncomplete_task,
-                    endpoints::edit_task,
+                    endpoints::modify_task,
                     endpoints::healthcheck,
                     endpoints::create_recurrence,
                     endpoints::get_recurrence_by_id,
                     endpoints::get_recurrences,
+                    endpoints::modify_recurrence
                 ],
             )
             .attach(DBConn::fairing())

@@ -104,8 +104,8 @@ pub async fn uncomplete_task(
         .map_err(RaskApiError::DatabaseError)
 }
 
-#[post("/task/<task_id>/edit", data = "<task_form>")]
-pub async fn edit_task(
+#[post("/task/<task_id>/modify", data = "<task_form>")]
+pub async fn modify_task(
     db: DBConn,
     task_id: i32,
     task_form: Form<TaskForm>,
@@ -159,6 +159,25 @@ pub async fn get_recurrences(
         .await?;
 
     Ok(Json(recurrences))
+}
+
+#[post("/recurrence/<recurrence_id>/modify", data = "<recurrence_form>")]
+pub async fn modify_recurrence(
+    db: DBConn,
+    recurrence_id: i32,
+    recurrence_form: Form<RecurrenceForm>,
+    _token: ApiToken,
+) -> Result<Option<Json<RecurrenceTemplate>>> {
+    db.run(move |conn| {
+        db_queries::update_recurrence(
+            conn,
+            recurrence_id,
+            WrappedNewRecurrenceTemplate::from(recurrence_form).0,
+        )
+    })
+    .await
+    .map(|row| row.map(Json))
+    .map_err(RaskApiError::DatabaseError)
 }
 
 // Misc
