@@ -12,7 +12,7 @@ chrono = { version = "0.4", features = ["serde"]}
 clap = "3.0.0-beta.4"
 dotenv = "0.15.0"
 reqwest = { version = "0.11", features = ["blocking", "json", "stream"] }
-serde = {version = "1.0.127"}
+serde = {version = "1.0.129"}
 thiserror = "1.0"
 
 [dev-dependencies]

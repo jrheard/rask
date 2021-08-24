@@ -12,7 +12,7 @@ diesel = {version = "1.4.4", features = ["postgres", "chrono"]}
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
-serde = {version = "1.0.127", features = ["derive"]}
+serde = {version = "1.0.129", features = ["derive"]}
 serde_urlencoded = "0.7"
 thiserror = "1.0"
 
