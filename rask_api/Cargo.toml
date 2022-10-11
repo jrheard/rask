@@ -8,7 +8,7 @@ version = "0.1.0"
 [dependencies]
 rask_lib = { path = "../rask_lib" }
 chrono = { version = "0.4", features = ["serde"]}
-diesel = {version = "1.4.4", features = ["postgres", "chrono"]}
+diesel = {version = "2.0.2", features = ["postgres", "chrono"]}
 diesel_migrations = "1.4.0"
 dotenv = "0.15.0"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
